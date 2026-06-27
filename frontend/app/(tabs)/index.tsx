@@ -278,7 +278,7 @@ function MessageBubble({
             <Text style={[styles.aliasLabel, { color: msg.sender_color }]}>
               {msg.sender_alias}
             </Text>
-            <GenderBadge gender={msg.sender_gender} size="xs" />
+            <GenderBadge gender={msg.sender_gender} size="sm" />
           </View>
         ) : null}
         <View

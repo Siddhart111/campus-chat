@@ -206,7 +206,7 @@ export default function PrivateChat() {
             <View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
                 <Text style={[styles.peerAlias, { color: colors.textPrimary }]}>{peer.alias}</Text>
-                <GenderBadge gender={peer.gender} size="xs" />
+                <GenderBadge gender={peer.gender} size="sm" />
               </View>
               <Text style={[styles.peerStatus, { color: peerTyping ? colors.neonSecondary : colors.textMuted }]}>
                 {peerTyping ? "typing…" : "Online"}

@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 
 type Gender = "male" | "female" | "unknown" | undefined | null;
@@ -15,42 +16,74 @@ export default function GenderBadge({
 
   const isMale = gender === "male";
   const config = isMale
-    ? { color: "#3DA9FF", bg: "rgba(61,169,255,0.12)", border: "rgba(61,169,255,0.4)", icon: "male" as const, label: "M" }
-    : { color: "#FF6BAA", bg: "rgba(255,107,170,0.12)", border: "rgba(255,107,170,0.45)", icon: "female" as const, label: "F" };
+    ? {
+        // Cyan / electric blue — "BOY" with lightning
+        gradient: ["#00B7FF", "#1E40FF"] as const,
+        border: "#7DD3FC",
+        glow: "#00B7FF",
+        icon: "flash" as const,
+        label: "BOY",
+      }
+    : {
+        // Hot pink / magenta — "GIRL" with sparkle
+        gradient: ["#FF4FB8", "#A21CAF"] as const,
+        border: "#F5A8E0",
+        glow: "#FF4FB8",
+        icon: "sparkles" as const,
+        label: "GIRL",
+      };
 
-  const padH = size === "xs" ? 4 : size === "sm" ? 6 : 8;
-  const padV = size === "xs" ? 1 : size === "sm" ? 2 : 3;
-  const iconSize = size === "xs" ? 9 : size === "sm" ? 11 : 13;
+  const padH = size === "xs" ? 6 : size === "sm" ? 8 : 10;
+  const padV = size === "xs" ? 2 : size === "sm" ? 3 : 4;
+  const iconSize = size === "xs" ? 10 : size === "sm" ? 12 : 14;
   const fontSize = size === "xs" ? 9 : size === "sm" ? 10 : 11;
 
   return (
     <View
       testID={`gender-badge-${gender}`}
       style={[
-        styles.badge,
+        styles.wrap,
         {
-          backgroundColor: config.bg,
-          borderColor: config.border,
-          paddingHorizontal: padH,
-          paddingVertical: padV,
+          shadowColor: config.glow,
+          shadowOpacity: 0.7,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 0 },
+          elevation: 3,
         },
       ]}
     >
-      <Ionicons name={config.icon} size={iconSize} color={config.color} />
-      <Text style={[styles.text, { color: config.color, fontSize }]}>
-        {config.label}
-      </Text>
+      <LinearGradient
+        colors={config.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[
+          styles.badge,
+          {
+            paddingHorizontal: padH,
+            paddingVertical: padV,
+            borderColor: config.border,
+          },
+        ]}
+      >
+        <Ionicons name={config.icon} size={iconSize} color="#FFFFFF" />
+        <Text style={[styles.text, { fontSize }]}>{config.label}</Text>
+      </LinearGradient>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: { borderRadius: 999 },
   badge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 3,
-    borderWidth: 1,
+    gap: 4,
     borderRadius: 999,
+    borderWidth: 1,
   },
-  text: { fontWeight: "800", letterSpacing: 0.5 },
+  text: {
+    color: "#FFFFFF",
+    fontWeight: "900",
+    letterSpacing: 0.6,
+  },
 });
