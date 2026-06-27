@@ -20,6 +20,7 @@ import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
+import GenderBadge from "@/src/components/GenderBadge";
 import { api, wsUrl } from "@/src/api";
 
 type Msg = {
@@ -28,6 +29,7 @@ type Msg = {
   sender_alias: string;
   sender_color: string;
   sender_avatar?: string | null;
+  sender_gender?: "male" | "female" | "unknown";
   text?: string;
   image?: string;
   timestamp: string;
@@ -272,9 +274,12 @@ function MessageBubble({
       ) : null}
       <View style={{ maxWidth: "76%" }}>
         {!isSelf ? (
-          <Text style={[styles.aliasLabel, { color: msg.sender_color }]}>
-            {msg.sender_alias}
-          </Text>
+          <View style={styles.aliasRow}>
+            <Text style={[styles.aliasLabel, { color: msg.sender_color }]}>
+              {msg.sender_alias}
+            </Text>
+            <GenderBadge gender={msg.sender_gender} size="xs" />
+          </View>
         ) : null}
         <View
           style={[
@@ -369,7 +374,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 6 },
   rowLeft: { justifyContent: "flex-start" },
   rowRight: { justifyContent: "flex-end", alignSelf: "flex-end" },
-  aliasLabel: { fontSize: 11, fontWeight: "700", marginBottom: 4, marginLeft: 2 },
+  aliasRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4, marginLeft: 2 },
+  aliasLabel: { fontSize: 11, fontWeight: "700" },
   bubble: {
     paddingHorizontal: 14,
     paddingVertical: 10,

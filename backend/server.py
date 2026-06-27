@@ -108,12 +108,18 @@ async def ensure_bots():
     if count >= 12:
         return
     # create 12 bots
-    for _ in range(12 - count):
+    bot_names = ["aarav", "siddhart", "rohit", "kavya", "priya", "ananya",
+                 "vikram", "rahul", "neha", "shreya", "arjun", "tanvi"]
+    for i in range(12 - count):
+        seed_name = bot_names[i % len(bot_names)]
+        seed_email = f"{seed_name}.{random.randint(100000, 999999)}@stu.upes.ac.in"
         bot = {
             "id": str(uuid.uuid4()),
-            "college_id": f"bot{random.randint(100000, 999999)}",
+            "college_id": seed_email,
             "alias": generate_alias(),
             "avatar_color": generate_color(),
+            "gender": detect_gender_from_email(seed_email),
+            "college": "UPES Dehradun",
             "created_at": now_iso(),
             "is_bot": True,
         }
@@ -219,6 +225,7 @@ import re
 import time
 import bcrypt
 from email_service import send_otp_email, email_enabled
+from gender_service import detect_gender_from_email
 
 UPES_EMAIL_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9._-]*\.\d+@stu\.upes\.ac\.in$")
 
@@ -575,6 +582,7 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
                     "sender_alias": sender["alias"],
                     "sender_color": sender["avatar_color"],
                     "sender_avatar": sender.get("avatar_image"),
+                    "sender_gender": sender.get("gender", "unknown"),
                     "text": data.get("text"),
                     "image": data.get("image"),
                     "recipient_id": None,
@@ -592,6 +600,7 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
                     "sender_alias": sender["alias"],
                     "sender_color": sender["avatar_color"],
                     "sender_avatar": sender.get("avatar_image"),
+                    "sender_gender": sender.get("gender", "unknown"),
                     "text": data.get("text"),
                     "image": data.get("image"),
                     "recipient_id": to_id,
@@ -666,6 +675,14 @@ logger = logging.getLogger(__name__)
 @app.on_event("startup")
 async def startup():
     await ensure_bots()
+    # backfill gender + college for users created before these fields existed
+    cursor = db.users.find({"$or": [{"gender": {"$exists": False}}, {"college": {"$exists": False}}]}, {"_id": 0, "id": 1, "college_id": 1})
+    async for u in cursor:
+        gender = detect_gender_from_email(u.get("college_id", ""))
+        await db.users.update_one(
+            {"id": u["id"]},
+            {"$set": {"gender": gender, "college": "UPES Dehradun"}},
+        )
     logger.info("Campus Chat backend ready")
 
 

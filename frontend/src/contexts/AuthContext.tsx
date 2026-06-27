@@ -7,6 +7,8 @@ export type User = {
   alias: string;
   avatar_color: string;
   avatar_image?: string | null;
+  gender?: "male" | "female" | "unknown";
+  college?: string;
 };
 
 type AuthCtx = {

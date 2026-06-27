@@ -4,7 +4,7 @@ import { LinearGradient } from "expo-linear-gradient";
 
 /**
  * Neon "Campus Chat" typographic wordmark.
- * Used on splash + landing.
+ * Uses ONLY textShadow* properties so there's no boxy outline behind the text.
  */
 export default function Wordmark({
   size = 44,
@@ -19,7 +19,7 @@ export default function Wordmark({
 
   useEffect(() => {
     if (!animate) return;
-    Animated.loop(
+    const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(pulse, {
           toValue: 1,
@@ -34,11 +34,12 @@ export default function Wordmark({
           useNativeDriver: false,
         }),
       ])
-    ).start();
+    );
+    loop.start();
+    return () => loop.stop();
   }, [animate, pulse]);
 
-  const shadowOpacity = pulse.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
-  const shadowRadius = pulse.interpolate({ inputRange: [0, 1], outputRange: [12, 26] });
+  const textShadowRadius = pulse.interpolate({ inputRange: [0, 1], outputRange: [10, 24] });
 
   return (
     <View style={styles.wrap} testID="wordmark">
@@ -47,8 +48,7 @@ export default function Wordmark({
           styles.text,
           {
             fontSize: size,
-            shadowOpacity,
-            shadowRadius,
+            textShadowRadius,
           },
         ]}
       >
@@ -61,8 +61,7 @@ export default function Wordmark({
             styles.textLight,
             {
               fontSize: size * 0.95,
-              shadowOpacity,
-              shadowRadius,
+              textShadowRadius,
             },
           ]}
         >
@@ -70,9 +69,7 @@ export default function Wordmark({
         </Animated.Text>
         <View style={styles.bar} />
       </View>
-      {subtitle ? (
-        <Text style={styles.subtitle}>{subtitle}</Text>
-      ) : null}
+      {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       <LinearGradient
         colors={["transparent", "rgba(139,92,246,0.2)", "transparent"]}
         start={{ x: 0, y: 0 }}
@@ -91,9 +88,6 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     textShadowColor: "#8B5CF6",
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 18,
-    shadowColor: "#8B5CF6",
-    shadowOffset: { width: 0, height: 0 },
   },
   textLight: {
     color: "#C7BFFF",
@@ -101,9 +95,6 @@ const styles = StyleSheet.create({
     letterSpacing: 8,
     textShadowColor: "#4F46E5",
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 18,
-    shadowColor: "#4F46E5",
-    shadowOffset: { width: 0, height: 0 },
     marginHorizontal: 10,
   },
   row: { flexDirection: "row", alignItems: "center", marginTop: 2 },

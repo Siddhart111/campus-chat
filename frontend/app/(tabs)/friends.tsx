@@ -17,21 +17,24 @@ import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
+import GenderBadge from "@/src/components/GenderBadge";
 import { api } from "@/src/api";
 
 type FriendRequest = {
   request_id: string;
-  from_user: { id: string; alias: string; avatar_color: string };
+  from_user: { id: string; alias: string; avatar_color: string; avatar_image?: string | null; gender?: "male" | "female" | "unknown" };
 };
 
 type Friend = {
   id: string;
   alias: string;
   avatar_color: string;
+  avatar_image?: string | null;
+  gender?: "male" | "female" | "unknown";
   online: boolean;
 };
 
-type DiscoverUser = { id: string; alias: string; avatar_color: string };
+type DiscoverUser = { id: string; alias: string; avatar_color: string; avatar_image?: string | null; gender?: "male" | "female" | "unknown" };
 
 export default function FriendsTab() {
   const { colors, mode } = useTheme();
@@ -168,9 +171,12 @@ export default function FriendsTab() {
               >
                 <Avatar alias={r.from_user.alias} color={r.from_user.avatar_color} image={r.from_user.avatar_image} size={44} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
-                  <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>
-                    {r.from_user.alias}
-                  </Text>
+                  <View style={styles.nameRow}>
+                    <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>
+                      {r.from_user.alias}
+                    </Text>
+                    <GenderBadge gender={r.from_user.gender} size="xs" />
+                  </View>
                   <Text style={[styles.cardSub, { color: colors.textMuted }]}>
                     wants to chat with you
                   </Text>
@@ -205,7 +211,10 @@ export default function FriendsTab() {
             >
               <Avatar alias={d.alias} color={d.avatar_color} image={d.avatar_image} size={44} />
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{d.alias}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{d.alias}</Text>
+                  <GenderBadge gender={d.gender} size="xs" />
+                </View>
                 <Text style={[styles.cardSub, { color: colors.textMuted }]}>
                   Anonymous · UPES verified
                 </Text>
@@ -248,7 +257,10 @@ export default function FriendsTab() {
             >
               <Avatar alias={item.alias} color={item.avatar_color} image={item.avatar_image} size={48} online={item.online} />
               <View style={{ flex: 1, marginLeft: 12 }}>
-                <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{item.alias}</Text>
+                <View style={styles.nameRow}>
+                  <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{item.alias}</Text>
+                  <GenderBadge gender={item.gender} size="xs" />
+                </View>
                 <Text style={[styles.cardSub, { color: item.online ? "#39FF14" : colors.textMuted }]}>
                   {item.online ? "Online now" : "Offline"}
                 </Text>
@@ -320,6 +332,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cardAlias: { fontSize: 15, fontWeight: "700" },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   cardSub: { fontSize: 12, marginTop: 2 },
   smallBtn: {
     paddingHorizontal: 14,

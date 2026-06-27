@@ -94,6 +94,25 @@ export default function Landing() {
             <Wordmark size={34} subtitle="Anonymous · Real · UPES only" />
           </View>
 
+          {/* College selector pill */}
+          <View style={[styles.collegeRow, { backgroundColor: colors.glass, borderColor: colors.border }]}>
+            <View
+              testID="college-selected"
+              style={[styles.collegeChip, { backgroundColor: "rgba(139,92,246,0.15)", borderColor: colors.neonSecondary }]}
+            >
+              <Ionicons name="school" size={14} color={colors.neonSecondary} />
+              <Text style={[styles.collegeText, { color: colors.textPrimary }]}>UPES Dehradun</Text>
+              <View style={[styles.miniDot, { backgroundColor: colors.online }]} />
+            </View>
+            <View
+              testID="college-coming-soon"
+              style={[styles.collegeChip, { backgroundColor: "rgba(255,255,255,0.03)", borderColor: colors.border }]}
+            >
+              <Ionicons name="add-circle-outline" size={14} color={colors.textMuted} />
+              <Text style={[styles.collegeText, { color: colors.textMuted }]}>More coming soon</Text>
+            </View>
+          </View>
+
           <View style={[styles.card, { backgroundColor: colors.glass, borderColor: colors.border }]}>
             {/* Mode segmented control */}
             <View style={[styles.seg, { borderColor: colors.border }]}>
@@ -296,6 +315,34 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: "center", padding: 20, gap: 22, paddingVertical: 32 },
   brand: { alignItems: "center", marginBottom: 4 },
+  collegeRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: 8,
+    padding: 10,
+    borderRadius: 18,
+    borderWidth: 1,
+  },
+  collegeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  collegeText: { fontSize: 12, fontWeight: "700" },
+  miniDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    shadowColor: "#39FF14",
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+  },
   card: { borderRadius: 28, borderWidth: 1, padding: 20, gap: 8 },
   seg: {
     flexDirection: "row",

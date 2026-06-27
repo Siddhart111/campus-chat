@@ -22,6 +22,7 @@ import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
+import GenderBadge from "@/src/components/GenderBadge";
 import { api, wsUrl } from "@/src/api";
 
 type Msg = {
@@ -30,12 +31,13 @@ type Msg = {
   sender_alias: string;
   sender_color: string;
   sender_avatar?: string | null;
+  sender_gender?: "male" | "female" | "unknown";
   text?: string;
   image?: string;
   timestamp: string;
 };
 
-type Peer = { id: string; alias: string; avatar_color: string; avatar_image?: string | null; online?: boolean };
+type Peer = { id: string; alias: string; avatar_color: string; avatar_image?: string | null; gender?: "male" | "female" | "unknown"; online?: boolean };
 
 function timeOf(iso: string) {
   try {
@@ -202,7 +204,10 @@ export default function PrivateChat() {
           <View style={styles.peerRow}>
             <Avatar alias={peer.alias} color={peer.avatar_color} image={peer.avatar_image} size={36} online />
             <View>
-              <Text style={[styles.peerAlias, { color: colors.textPrimary }]}>{peer.alias}</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={[styles.peerAlias, { color: colors.textPrimary }]}>{peer.alias}</Text>
+                <GenderBadge gender={peer.gender} size="xs" />
+              </View>
               <Text style={[styles.peerStatus, { color: peerTyping ? colors.neonSecondary : colors.textMuted }]}>
                 {peerTyping ? "typing…" : "Online"}
               </Text>
