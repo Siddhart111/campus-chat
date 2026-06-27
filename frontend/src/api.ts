@@ -80,4 +80,18 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ avatar_image }),
     }),
+  // Wall
+  wallList: (viewerId: string) => jsonFetch(`/wall/posts?viewer_id=${viewerId}`),
+  wallCreate: (author_id: string, text: string) =>
+    jsonFetch("/wall/posts", { method: "POST", body: JSON.stringify({ author_id, text }) }),
+  wallLike: (postId: string, user_id: string) =>
+    jsonFetch(`/wall/posts/${postId}/like?user_id=${user_id}`, { method: "POST" }),
+  wallGetPost: (postId: string, viewerId: string) =>
+    jsonFetch(`/wall/posts/${postId}?viewer_id=${viewerId}`),
+  wallComments: (postId: string) => jsonFetch(`/wall/posts/${postId}/comments`),
+  wallAddComment: (postId: string, author_id: string, text: string) =>
+    jsonFetch(`/wall/posts/${postId}/comments`, {
+      method: "POST",
+      body: JSON.stringify({ author_id, text }),
+    }),
 };

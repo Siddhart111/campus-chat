@@ -556,6 +556,132 @@ async def online_count():
     return {"count": manager.online_count() + random.randint(20, 150)}
 
 
+# ---------------- Wall (Q&A) ----------------
+class PostCreate(BaseModel):
+    author_id: str
+    text: str
+
+
+class CommentCreate(BaseModel):
+    author_id: str
+    text: str
+
+
+async def _user_card(user_id: str) -> dict:
+    u = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not u:
+        return {"id": user_id, "alias": "Unknown", "avatar_color": "#52525B"}
+    return {
+        "id": u["id"],
+        "alias": u["alias"],
+        "avatar_color": u["avatar_color"],
+        "avatar_image": u.get("avatar_image"),
+        "gender": u.get("gender", "unknown"),
+    }
+
+
+@api_router.get("/wall/posts")
+async def list_posts(viewer_id: str = "", limit: int = 50):
+    posts = await db.posts.find({}, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    out = []
+    for p in posts:
+        liked = False
+        if viewer_id:
+            liked = bool(await db.post_likes.find_one(
+                {"post_id": p["id"], "user_id": viewer_id}, {"_id": 0}
+            ))
+        out.append({**p, "liked": liked})
+    return out
+
+
+@api_router.post("/wall/posts")
+async def create_post(req: PostCreate):
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Post can't be empty")
+    if len(text) > 500:
+        raise HTTPException(status_code=400, detail="Post too long (max 500)")
+    author = await _user_card(req.author_id)
+    doc = {
+        "id": str(uuid.uuid4()),
+        "author_id": author["id"],
+        "author_alias": author["alias"],
+        "author_color": author["avatar_color"],
+        "author_avatar": author.get("avatar_image"),
+        "author_gender": author.get("gender", "unknown"),
+        "text": text,
+        "timestamp": now_iso(),
+        "likes_count": 0,
+        "comments_count": 0,
+    }
+    await db.posts.insert_one(doc.copy())
+    doc.pop("_id", None)
+    return doc
+
+
+@api_router.post("/wall/posts/{post_id}/like")
+async def toggle_like(post_id: str, user_id: str):
+    existing = await db.post_likes.find_one({"post_id": post_id, "user_id": user_id})
+    if existing:
+        await db.post_likes.delete_one({"post_id": post_id, "user_id": user_id})
+        await db.posts.update_one({"id": post_id}, {"$inc": {"likes_count": -1}})
+        return {"liked": False}
+    await db.post_likes.insert_one({
+        "id": str(uuid.uuid4()),
+        "post_id": post_id,
+        "user_id": user_id,
+        "created_at": now_iso(),
+    })
+    await db.posts.update_one({"id": post_id}, {"$inc": {"likes_count": 1}})
+    return {"liked": True}
+
+
+@api_router.get("/wall/posts/{post_id}")
+async def get_post(post_id: str, viewer_id: str = ""):
+    p = await db.posts.find_one({"id": post_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(status_code=404, detail="Post not found")
+    liked = False
+    if viewer_id:
+        liked = bool(await db.post_likes.find_one(
+            {"post_id": post_id, "user_id": viewer_id}, {"_id": 0}
+        ))
+    return {**p, "liked": liked}
+
+
+@api_router.get("/wall/posts/{post_id}/comments")
+async def list_comments(post_id: str):
+    return await db.post_comments.find(
+        {"post_id": post_id}, {"_id": 0}
+    ).sort("timestamp", 1).to_list(200)
+
+
+@api_router.post("/wall/posts/{post_id}/comments")
+async def add_comment(post_id: str, req: CommentCreate):
+    text = req.text.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Comment can't be empty")
+    p = await db.posts.find_one({"id": post_id}, {"_id": 0})
+    if not p:
+        raise HTTPException(status_code=404, detail="Post not found")
+    author = await _user_card(req.author_id)
+    doc = {
+        "id": str(uuid.uuid4()),
+        "post_id": post_id,
+        "author_id": author["id"],
+        "author_alias": author["alias"],
+        "author_color": author["avatar_color"],
+        "author_avatar": author.get("avatar_image"),
+        "author_gender": author.get("gender", "unknown"),
+        "text": text,
+        "timestamp": now_iso(),
+    }
+    await db.post_comments.insert_one(doc.copy())
+    await db.posts.update_one({"id": post_id}, {"$inc": {"comments_count": 1}})
+    doc.pop("_id", None)
+    return doc
+
+
 # ---------------- WebSocket ----------------
 @api_router.websocket("/ws/{user_id}")
 async def websocket_endpoint(ws: WebSocket, user_id: str):

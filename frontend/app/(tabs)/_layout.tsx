@@ -69,6 +69,15 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="wall"
+        options={{
+          title: "Wall",
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="megaphone" color={color} focused={focused} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="friends"
         options={{
           title: "Friends",
