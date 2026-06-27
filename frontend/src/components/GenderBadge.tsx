@@ -17,20 +17,20 @@ export default function GenderBadge({
   const isMale = gender === "male";
   const config = isMale
     ? {
-        // Cyan / electric blue — "BOY" with lightning
+        // Cyan / electric blue — "HE" with lightning
         gradient: ["#00B7FF", "#1E40FF"] as const,
         border: "#7DD3FC",
         glow: "#00B7FF",
         icon: "flash" as const,
-        label: "BOY",
+        label: "HE",
       }
     : {
-        // Hot pink / magenta — "GIRL" with sparkle
+        // Hot pink / magenta — "SHE" with sparkle
         gradient: ["#FF4FB8", "#A21CAF"] as const,
         border: "#F5A8E0",
         glow: "#FF4FB8",
         icon: "sparkles" as const,
-        label: "GIRL",
+        label: "SHE",
       };
 
   const padH = size === "xs" ? 6 : size === "sm" ? 8 : 10;

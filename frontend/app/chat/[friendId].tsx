@@ -349,21 +349,27 @@ function TypingBubble({ peer, colors }: { peer: Peer; colors: any }) {
   return (
     <View style={[styles.row, styles.rowLeft, { marginTop: 4 }]} testID="typing-indicator">
       <Avatar alias={peer.alias} color={peer.avatar_color} image={peer.avatar_image} size={24} />
-      <View
-        style={[
-          styles.typingBubble,
-          { backgroundColor: colors.bubbleOther, borderColor: colors.border },
-        ]}
-      >
-        {dots.map((d, i) => (
-          <Animated.View
-            key={i}
-            style={[
-              styles.typingDot,
-              { backgroundColor: colors.textSecondary, transform: [{ translateY: d }] },
-            ]}
-          />
-        ))}
+      <View style={{ gap: 4 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginLeft: 2 }}>
+          <Text style={{ color: peer.avatar_color, fontSize: 10, fontWeight: "700" }}>{peer.alias}</Text>
+          <GenderBadge gender={peer.gender} size="xs" />
+        </View>
+        <View
+          style={[
+            styles.typingBubble,
+            { backgroundColor: colors.bubbleOther, borderColor: colors.border },
+          ]}
+        >
+          {dots.map((d, i) => (
+            <Animated.View
+              key={i}
+              style={[
+                styles.typingDot,
+                { backgroundColor: colors.textSecondary, transform: [{ translateY: d }] },
+              ]}
+            />
+          ))}
+        </View>
       </View>
     </View>
   );
