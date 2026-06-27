@@ -1,0 +1,114 @@
+{
+  "project_name": "Campus Chat",
+  "platform": "React Native Expo",
+  "theme_archetype": {
+    "primary": "Archetype 7 (Electric & Neon)",
+    "secondary": "Archetype 5 (Luxury Cinematic)",
+    "reasoning": "Explicitly requested by user: dark-first design, deep navy/slate tones, neon indigo/violet accents, glassmorphism. It avoids generic tech aesthetics by grounding the neon in deep cinematic void blacks."
+  },
+  "colors": {
+    "background_base": "#05050A",
+    "background_surface": "rgba(20, 20, 35, 0.6)",
+    "background_glass": "rgba(255, 255, 255, 0.03)",
+    "primary_neon": "#4F46E5",
+    "secondary_neon": "#8B5CF6",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "text_muted": "#52525B",
+    "border_subtle": "rgba(255, 255, 255, 0.08)",
+    "border_glow": "rgba(79, 70, 229, 0.5)",
+    "avatar_palette": [
+      "#FF0099", "#00F3FF", "#39FF14", "#FF3B30", 
+      "#FF9500", "#FFCC00", "#5856D6", "#AF52DE", 
+      "#FF2D55", "#007AFF", "#34C759", "#00C7BE"
+    ]
+  },
+  "typography": {
+    "font_primary": "Outfit",
+    "font_display": "Unbounded",
+    "rules": {
+      "splash_wordmark": "font-black text-5xl uppercase tracking-[0.2em] text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 to-violet-500 drop-shadow-[0_0_15px_rgba(139,92,246,0.8)]",
+      "h1": "text-3xl font-bold tracking-tight text-white",
+      "h2": "text-2xl font-semibold tracking-tight text-white",
+      "h3": "text-xl font-medium text-white",
+      "body": "text-base font-normal text-zinc-300",
+      "small_label": "text-xs font-semibold tracking-wider text-zinc-400 uppercase"
+    }
+  },
+  "layout_spacing": {
+    "screen_padding": "p-6",
+    "container_gap": "gap-6",
+    "element_gap": "gap-3",
+    "radii": {
+      "glass_card": "rounded-3xl",
+      "chat_bubble": "rounded-2xl",
+      "input_box": "rounded-xl",
+      "avatar": "rounded-full"
+    }
+  },
+  "components": {
+    "splash_screen": {
+      "background": "Dark gradient #05050A to #0A0A12",
+      "element": "Typographic 'Campus Chat' wordmark only. No icon logo.",
+      "effects": "Intense neon glow pulse animation on text."
+    },
+    "login_screen": {
+      "input": "Large padded text input for UPES ID, subtle glass background, active border switches to #4F46E5 with glow.",
+      "button": "Full-width rounded-full button, solid #4F46E5 with shadow-[0_0_20px_rgba(79,70,229,0.4)]."
+    },
+    "otp_screen": {
+      "boxes": "6 independent square inputs. Default: border-white/10. Focus: border-[#8B5CF6] shadow-[0_0_15px_rgba(139,92,246,0.6)] text-white text-2xl font-bold.",
+      "timer": "Small monospace text 'Resend in 60s' in text-zinc-400."
+    },
+    "top_bar": {
+      "style": "Glassmorphism header (BlurView), z-index 50, fixed top.",
+      "content": "Displays user's auto-generated alias (e.g., 'You\\'re: SilentFalcon42') with their assigned neon avatar."
+    },
+    "bottom_tab_nav": {
+      "style": "Floating pill-shaped glass container above safe area bottom. background_glass + blur.",
+      "active_indicator": "A glowing neon dot or underline beneath the active tab icon, icon color changes to #00F3FF or #4F46E5."
+    },
+    "chat_feed": {
+      "pinned_banner": "Glass card at the top, border-indigo-500/30, subtle indigo tint background. Contains community rules/welcome.",
+      "online_count": "Absolute positioned glowing green (#39FF14) dot + '243 online' in tiny text.",
+      "bubble_self": "Background #4F46E5, text-white, border-bottom-right-radius: 4px.",
+      "bubble_other": "Background rgba(255,255,255,0.05), border 1px solid rgba(255,255,255,0.1), border-bottom-left-radius: 4px. MUST show random neon colored avatar circle attached.",
+      "typing_indicator": "Three animated bouncing dots '...' inside a small dark glass bubble."
+    },
+    "friends_tab": {
+      "layout": "Top segmented control (Requests | My Friends).",
+      "list_item": "Row with Avatar, Alias, Action buttons (Accept/Decline for requests, Chat icon for friends).",
+      "sliding_chat": "1-on-1 private chat opens via sliding panel from the right (React Navigation screen push transition)."
+    }
+  },
+  "motion_and_interactions": {
+    "screen_transitions": "Slide from right for private chats, fade for auth flow.",
+    "micro_interactions": "OTP boxes pulse on focus. Tab icons pop slightly on press.",
+    "typing_animation": "Sequential vertical bounce on the 3 dots."
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure white text on #4F46E5 meets minimum 4.5:1 ratio. Muted text must not drop below #71717A against #05050A.",
+    "testing_attributes": "All interactive elements, buttons, inputs, and list items MUST include a data-testid attribute (e.g., data-testid='otp-input-1', data-testid='tab-friends'). React Native testID should map to this if needed, but data-testid is strictly required."
+  },
+  "image_urls": [
+    {
+      "category": "splash_background_fallback",
+      "url": "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTV8MHwxfHNlYXJjaHwyfHxhYnN0cmFjdCUyMGRhcmslMjBuZW9uJTIwZ2xvdyUyMGJhY2tncm91bmR8ZW58MHx8fHwxNzgyNTkyMTk1fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Abstract dark purple and pink glowing waves. Use as an optional subtle background layer behind the Splash Screen wordmark if needed."
+    },
+    {
+      "category": "auth_background_fallback",
+      "url": "https://images.pexels.com/photos/34929879/pexels-photo-34929879.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Nighttime university courtyard. Use at 5-10% opacity behind the deep navy login/OTP screens for subtle campus atmosphere."
+    }
+  ],
+  "instructions_to_main_agent": [
+    "Build as a React Native Expo application using NativeWind or standard StyleSheet.",
+    "Do NOT use any chat bubble/graduation cap icon for the logo. Only use the typographic wordmark 'Campus Chat'.",
+    "Implement the 6-digit OTP UI with individual boxes that auto-focus to the next box upon entry.",
+    "The Dark Mode toggle should default to dark. Implement a React Context or similar theme provider.",
+    "Ensure the private 1-on-1 chat acts as a distinct screen pushing from the right, not just a modal overlay.",
+    "Use standard UI primitives (View, Text, TextInput, Pressable) with styles applying the defined colors and radii.",
+    "Strictly add data-testid to every Pressable, TextInput, and interactive View."
+  ]
+}
