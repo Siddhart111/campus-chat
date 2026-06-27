@@ -76,6 +76,12 @@ class LoginRequest(BaseModel):
     password: str
 
 
+class ResetPasswordRequest(BaseModel):
+    email: str
+    otp: str
+    new_password: str
+
+
 class User(BaseModel):
     id: str
     college_id: str
@@ -326,6 +332,28 @@ async def verify_otp(req: VerifyOtpRequest):
     return {"user": safe, "is_new": True}
 
 
+@api_router.post("/auth/reset-password")
+async def reset_password(req: ResetPasswordRequest):
+    email = req.email.strip().lower()
+    if not UPES_EMAIL_RE.match(email):
+        raise HTTPException(status_code=400, detail="Use your UPES student email.")
+    expected = otp_store.get(email)
+    if not expected or req.otp.strip() != expected:
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+    user = await db.users.find_one({"college_id": email}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="No account found for this email.")
+    pw_err = _check_password_format(req.new_password)
+    if pw_err:
+        raise HTTPException(status_code=400, detail=pw_err)
+    otp_store.pop(email, None)
+    new_hash = _hash_password(req.new_password)
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password_hash": new_hash}})
+    safe = {k: v for k, v in user.items() if k != "password_hash"}
+    safe["password_hash"] = None
+    return {"ok": True, "user": {k: v for k, v in safe.items() if k != "password_hash"}}
+
+
 @api_router.get("/auth/exists/{email}")
 async def email_exists(email: str):
     email = email.strip().lower()
@@ -535,6 +563,10 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
         while True:
             data = await ws.receive_json()
             mtype = data.get("type")
+            # Re-fetch sender each time so profile picture / alias updates flow in real-time
+            sender = await db.users.find_one({"id": user_id}, {"_id": 0})
+            if not sender:
+                continue
             if mtype == "group_message":
                 doc = {
                     "id": str(uuid.uuid4()),

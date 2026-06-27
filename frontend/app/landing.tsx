@@ -269,6 +269,18 @@ export default function Landing() {
                 )}
               </Text>
             </Pressable>
+
+            {mode === "login" ? (
+              <Pressable
+                testID="forgot-password-link"
+                onPress={() => router.push("/forgot")}
+                style={{ alignSelf: "center", marginTop: 6 }}
+              >
+                <Text style={{ color: colors.neonSecondary, fontSize: 12, fontWeight: "600" }}>
+                  Forgot password?
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
 
           <Text style={[styles.foot, { color: colors.textMuted }]}>

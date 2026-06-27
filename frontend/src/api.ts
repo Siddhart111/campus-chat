@@ -43,6 +43,11 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email, password }),
     }),
+  resetPassword: (email: string, otp: string, new_password: string) =>
+    jsonFetch("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, otp, new_password }),
+    }),
   groupMessages: () => jsonFetch("/messages/group"),
   privateMessages: (a: string, b: string) =>
     jsonFetch(`/messages/private/${a}/${b}`),

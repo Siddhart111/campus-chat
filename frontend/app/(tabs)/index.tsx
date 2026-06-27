@@ -205,23 +205,9 @@ export default function GroupChat() {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         />
 
-        {pendingImage ? (
-          <View style={[styles.preview, { borderColor: colors.border }]}>
-            <Image source={{ uri: pendingImage }} style={styles.previewImg} />
-            <Pressable testID="cancel-image-button" onPress={() => setPendingImage(null)} style={styles.previewClose}>
-              <Ionicons name="close" size={18} color="#fff" />
-            </Pressable>
-          </View>
-        ) : null}
+        {pendingImage ? null : null}
 
         <View style={[styles.composer, { backgroundColor: colors.glassStrong, borderColor: colors.border }]}>
-          <Pressable
-            testID="attach-image-button"
-            onPress={pickImage}
-            style={[styles.iconBtn, { backgroundColor: "rgba(139,92,246,0.15)" }]}
-          >
-            <Ionicons name="image-outline" size={22} color={colors.neonSecondary} />
-          </Pressable>
           <TextInput
             testID="message-input"
             value={text}
@@ -235,14 +221,14 @@ export default function GroupChat() {
           <Pressable
             testID="send-message-button"
             onPress={send}
-            disabled={!text.trim() && !pendingImage}
+            disabled={!text.trim()}
             style={({ pressed }) => [
               styles.sendBtn,
               {
-                backgroundColor: text.trim() || pendingImage ? colors.neonPrimary : "#2A2A40",
+                backgroundColor: text.trim() ? colors.neonPrimary : "#2A2A40",
                 opacity: pressed ? 0.85 : 1,
                 shadowColor: colors.neonPrimary,
-                shadowOpacity: text.trim() || pendingImage ? 0.7 : 0,
+                shadowOpacity: text.trim() ? 0.7 : 0,
               },
             ]}
           >
