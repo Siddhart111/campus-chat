@@ -91,7 +91,7 @@ export default function Landing() {
       >
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
-            <Wordmark size={34} subtitle="Anonymous · Real · UPES only" />
+            <Wordmark size={34} subtitle="Anonymous · Real · Fun" />
           </View>
 
           {/* College selector pill */}

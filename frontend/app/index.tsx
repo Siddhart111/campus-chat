@@ -32,7 +32,7 @@ export default function Index() {
       />
       <View style={styles.glowBlob} />
       <View style={[styles.glowBlob, styles.glowBlob2]} />
-      <Wordmark size={42} subtitle="Anonymous · Real · UPES only" />
+      <Wordmark size={42} subtitle="Anonymous · Real · Fun" />
       <ActivityIndicator
         size="small"
         color="#8B5CF6"
