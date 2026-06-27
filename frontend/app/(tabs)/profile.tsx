@@ -1,22 +1,67 @@
-import { View, Text, StyleSheet, Pressable, Switch, ScrollView } from "react-native";
+import { useState } from "react";
+import { View, Text, StyleSheet, Pressable, Switch, ScrollView, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
 import Wordmark from "@/src/components/Wordmark";
+import { api } from "@/src/api";
 
 export default function ProfileTab() {
   const { colors, mode, toggle } = useTheme();
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
   const { show } = useToast();
   const router = useRouter();
+  const [uploading, setUploading] = useState(false);
 
   if (!user) return null;
+
+  const pickAndUpload = async () => {
+    try {
+      const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!perm.granted) {
+        show("Photo permission denied", "error");
+        return;
+      }
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.5,
+        base64: true,
+        allowsEditing: true,
+        aspect: [1, 1],
+      });
+      if (res.canceled || !res.assets[0]?.base64) return;
+      const dataUri = `data:image/jpeg;base64,${res.assets[0].base64}`;
+      setUploading(true);
+      const updated = await api.updateAvatar(user.id, dataUri);
+      await updateUser({ avatar_image: updated.avatar_image });
+      show("Profile picture updated", "success");
+    } catch (e: any) {
+      show(e.message || "Upload failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePic = async () => {
+    if (!user.avatar_image) return;
+    try {
+      setUploading(true);
+      await api.updateAvatar(user.id, null);
+      await updateUser({ avatar_image: null });
+      show("Profile picture removed", "info");
+    } catch (e: any) {
+      show(e.message || "Failed", "error");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const doSignOut = async () => {
     await signOut();
@@ -33,7 +78,27 @@ export default function ProfileTab() {
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Identity hero */}
         <View style={[styles.hero, { backgroundColor: colors.glass, borderColor: colors.border }]}>
-          <Avatar alias={user.alias} color={user.avatar_color} size={88} glow />
+          <View>
+            <Avatar
+              alias={user.alias}
+              color={user.avatar_color}
+              image={user.avatar_image}
+              size={104}
+              glow
+            />
+            <Pressable
+              testID="upload-avatar-button"
+              onPress={pickAndUpload}
+              disabled={uploading}
+              style={[styles.cameraBtn, { backgroundColor: colors.neonPrimary, borderColor: colors.bg }]}
+            >
+              {uploading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Ionicons name="camera" size={16} color="#fff" />
+              )}
+            </Pressable>
+          </View>
           <Text style={[styles.alias, { color: colors.textPrimary }]}>{user.alias}</Text>
           <View style={[styles.idChip, { borderColor: colors.border, backgroundColor: "rgba(255,255,255,0.03)" }]}>
             <Ionicons name="shield-checkmark" size={12} color={colors.neonSecondary} />
@@ -42,8 +107,35 @@ export default function ProfileTab() {
             </Text>
           </View>
           <Text style={[styles.idLine, { color: colors.textMuted }]}>
-            Real ID hidden · Identity rotates every session
+            Real ID hidden · You appear as your anonymous alias
           </Text>
+
+          <View style={styles.heroActions}>
+            <Pressable
+              testID="change-photo-button"
+              onPress={pickAndUpload}
+              disabled={uploading}
+              style={[styles.actionBtn, { backgroundColor: colors.neonPrimary }]}
+            >
+              <Ionicons name="image" size={14} color="#fff" />
+              <Text style={styles.actionText}>
+                {user.avatar_image ? "Change Photo" : "Upload Photo"}
+              </Text>
+            </Pressable>
+            {user.avatar_image ? (
+              <Pressable
+                testID="remove-photo-button"
+                onPress={removePic}
+                disabled={uploading}
+                style={[styles.actionGhost, { borderColor: colors.border }]}
+              >
+                <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
+                <Text style={[styles.actionGhostText, { color: colors.textSecondary }]}>
+                  Remove
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
         </View>
 
         {/* Settings */}
@@ -88,7 +180,12 @@ export default function ProfileTab() {
         </View>
 
         {/* About */}
-        <View style={[styles.section, { backgroundColor: colors.glass, borderColor: colors.border, alignItems: "center", paddingVertical: 24 }]}>
+        <View
+          style={[
+            styles.section,
+            { backgroundColor: colors.glass, borderColor: colors.border, alignItems: "center", paddingVertical: 24 },
+          ]}
+        >
           <Wordmark size={22} animate={false} />
           <Text style={[styles.tag, { color: colors.textMuted, marginTop: 12 }]}>
             v1.0 · For UPES Dehradun students
@@ -152,6 +249,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
+  cameraBtn: {
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 3,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   alias: { fontSize: 22, fontWeight: "800", marginTop: 4 },
   idChip: {
     flexDirection: "row",
@@ -163,7 +271,27 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   idChipText: { fontSize: 11, fontWeight: "600" },
-  idLine: { fontSize: 11, marginTop: 4 },
+  idLine: { fontSize: 11, marginTop: 4, textAlign: "center" },
+  heroActions: { flexDirection: "row", gap: 10, marginTop: 14 },
+  actionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+  },
+  actionText: { color: "#fff", fontSize: 12, fontWeight: "700" },
+  actionGhost: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  actionGhostText: { fontSize: 12, fontWeight: "700" },
   section: {
     borderRadius: 22,
     borderWidth: 1,

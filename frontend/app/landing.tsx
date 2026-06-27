@@ -40,9 +40,9 @@ export default function Landing() {
     }
     try {
       setLoading(true);
-      const res = await api.sendOtp(normalized);
-      show(`OTP sent to your UPES email · demo: ${res.demo_otp}`, "success");
-      router.push({ pathname: "/otp", params: { email: normalized, demoOtp: res.demo_otp } });
+      await api.sendOtp(normalized);
+      show("OTP sent — check your UPES inbox 📩", "success");
+      router.push({ pathname: "/otp", params: { email: normalized } });
     } catch (e: any) {
       show(e.message || "Failed to send OTP", "error");
     } finally {

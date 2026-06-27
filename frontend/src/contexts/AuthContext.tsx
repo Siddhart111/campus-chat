@@ -6,6 +6,7 @@ export type User = {
   college_id: string;
   alias: string;
   avatar_color: string;
+  avatar_image?: string | null;
 };
 
 type AuthCtx = {
@@ -13,6 +14,7 @@ type AuthCtx = {
   loading: boolean;
   signIn: (u: User) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => Promise<void>;
 };
 
 const Ctx = createContext<AuthCtx>({} as AuthCtx);
@@ -45,7 +47,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null);
   }, []);
 
-  return <Ctx.Provider value={{ user, loading, signIn, signOut }}>{children}</Ctx.Provider>;
+  const updateUser = useCallback(async (patch: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...patch };
+      storage.setItem(KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  return <Ctx.Provider value={{ user, loading, signIn, signOut, updateUser }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => useContext(Ctx);

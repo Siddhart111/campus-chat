@@ -20,7 +20,7 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { api } from "@/src/api";
 
 export default function Otp() {
-  const { email, demoOtp } = useLocalSearchParams<{ email: string; demoOtp?: string }>();
+  const { email } = useLocalSearchParams<{ email: string }>();
   const { colors } = useTheme();
   const { show } = useToast();
   const { signIn } = useAuth();
@@ -82,9 +82,9 @@ export default function Otp() {
 
   const resend = async () => {
     try {
-      const res = await api.sendOtp(String(email));
+      await api.sendOtp(String(email));
       setSeconds(60);
-      show(`OTP resent · demo: ${res.demo_otp}`, "success");
+      show("New OTP sent — check your inbox 📩", "success");
     } catch (e: any) {
       show(e.message || "Failed to resend", "error");
     }
@@ -116,11 +116,9 @@ export default function Otp() {
             Sent to{" "}
             <Text style={{ color: colors.neonSecondary }}>{email}</Text>
           </Text>
-          {demoOtp ? (
-            <Text style={[styles.demo, { color: colors.textMuted }]}>
-              Demo OTP for testing: <Text style={{ color: colors.neonSecondary }}>{demoOtp}</Text>
-            </Text>
-          ) : null}
+          <Text style={[styles.demo, { color: colors.textMuted }]}>
+            📩 Open your UPES inbox to find the 6-digit code.
+          </Text>
 
           <View style={styles.boxes}>
             {digits.map((d, i) => {

@@ -204,6 +204,7 @@ async def root():
 
 
 import re
+from email_service import send_otp_email, email_enabled
 
 UPES_EMAIL_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9._-]*\.\d+@stu\.upes\.ac\.in$")
 
@@ -216,9 +217,23 @@ async def send_otp(req: SendOtpRequest):
             status_code=400,
             detail="Use your UPES email like parth.29555@stu.upes.ac.in",
         )
+    if not email_enabled():
+        raise HTTPException(
+            status_code=503,
+            detail="Email service is not configured. The admin must set RESEND_API_KEY on the server.",
+        )
     otp = generate_otp()
     otp_store[email] = otp
-    return {"ok": True, "email": email, "demo_otp": otp}
+    try:
+        send_otp_email(email, otp)
+    except Exception as e:
+        logger.exception("OTP email send failed for %s", email)
+        otp_store.pop(email, None)
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not deliver OTP email: {e}",
+        )
+    return {"ok": True, "email": email}
 
 
 @api_router.post("/auth/verify-otp")
@@ -251,6 +266,22 @@ async def get_user(user_id: str):
     if not u:
         raise HTTPException(status_code=404, detail="User not found")
     return u
+
+
+class AvatarUpdate(BaseModel):
+    avatar_image: Optional[str] = None  # base64 data URI or null to remove
+
+
+@api_router.post("/users/{user_id}/avatar")
+async def update_avatar(user_id: str, body: AvatarUpdate):
+    u = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    await db.users.update_one(
+        {"id": user_id}, {"$set": {"avatar_image": body.avatar_image}}
+    )
+    updated = await db.users.find_one({"id": user_id}, {"_id": 0})
+    return updated
 
 
 @api_router.get("/users/discover/{user_id}")
@@ -438,6 +469,7 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
                     "sender_id": sender["id"],
                     "sender_alias": sender["alias"],
                     "sender_color": sender["avatar_color"],
+                    "sender_avatar": sender.get("avatar_image"),
                     "text": data.get("text"),
                     "image": data.get("image"),
                     "recipient_id": None,
@@ -454,6 +486,7 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
                     "sender_id": sender["id"],
                     "sender_alias": sender["alias"],
                     "sender_color": sender["avatar_color"],
+                    "sender_avatar": sender.get("avatar_image"),
                     "text": data.get("text"),
                     "image": data.get("image"),
                     "recipient_id": to_id,

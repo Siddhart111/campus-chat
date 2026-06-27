@@ -166,7 +166,7 @@ export default function FriendsTab() {
                 key={r.request_id}
                 style={[styles.card, { backgroundColor: colors.glass, borderColor: colors.border }]}
               >
-                <Avatar alias={r.from_user.alias} color={r.from_user.avatar_color} size={44} />
+                <Avatar alias={r.from_user.alias} color={r.from_user.avatar_color} image={r.from_user.avatar_image} size={44} />
                 <View style={{ flex: 1, marginLeft: 12 }}>
                   <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>
                     {r.from_user.alias}
@@ -203,7 +203,7 @@ export default function FriendsTab() {
               key={d.id}
               style={[styles.card, { backgroundColor: colors.glass, borderColor: colors.border }]}
             >
-              <Avatar alias={d.alias} color={d.avatar_color} size={44} />
+              <Avatar alias={d.alias} color={d.avatar_color} image={d.avatar_image} size={44} />
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{d.alias}</Text>
                 <Text style={[styles.cardSub, { color: colors.textMuted }]}>
@@ -246,7 +246,7 @@ export default function FriendsTab() {
                 },
               ]}
             >
-              <Avatar alias={item.alias} color={item.avatar_color} size={48} online={item.online} />
+              <Avatar alias={item.alias} color={item.avatar_color} image={item.avatar_image} size={48} online={item.online} />
               <View style={{ flex: 1, marginLeft: 12 }}>
                 <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{item.alias}</Text>
                 <Text style={[styles.cardSub, { color: item.online ? "#39FF14" : colors.textMuted }]}>

@@ -27,6 +27,7 @@ type Msg = {
   sender_id: string;
   sender_alias: string;
   sender_color: string;
+  sender_avatar?: string | null;
   text?: string;
   image?: string;
   timestamp: string;
@@ -149,7 +150,7 @@ export default function GroupChat() {
       {/* Top header */}
       <View style={[styles.header, { borderColor: colors.border, backgroundColor: colors.glass }]}>
         <View style={styles.headerLeft}>
-          <Avatar alias={user.alias} color={user.avatar_color} size={36} glow />
+          <Avatar alias={user.alias} color={user.avatar_color} image={user.avatar_image} size={36} glow />
           <View>
             <Text style={[styles.headerHi, { color: colors.textMuted }]}>YOU&apos;RE</Text>
             <Text style={[styles.headerAlias, { color: colors.textPrimary }]}>{user.alias}</Text>
@@ -281,7 +282,7 @@ function MessageBubble({
       ]}
     >
       {!isSelf ? (
-        <Avatar alias={msg.sender_alias} color={msg.sender_color} size={32} />
+        <Avatar alias={msg.sender_alias} color={msg.sender_color} image={msg.sender_avatar} size={32} />
       ) : null}
       <View style={{ maxWidth: "76%" }}>
         {!isSelf ? (

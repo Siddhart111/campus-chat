@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet } from "react-native";
 
 export default function Avatar({
   alias,
@@ -7,12 +7,14 @@ export default function Avatar({
   size = 40,
   online,
   glow,
+  image,
 }: {
   alias: string;
   color: string;
   size?: number;
   online?: boolean;
   glow?: boolean;
+  image?: string | null;
 }) {
   const initials = alias
     .replace(/[0-9]/g, "")
@@ -29,21 +31,30 @@ export default function Avatar({
             borderRadius: size / 2,
             backgroundColor: color,
             shadowColor: color,
-            shadowOpacity: glow ? 0.9 : 0.5,
-            shadowRadius: glow ? 12 : 6,
+            shadowOpacity: glow ? 0.45 : 0.15,
+            shadowRadius: glow ? 6 : 3,
             shadowOffset: { width: 0, height: 0 },
-            elevation: glow ? 8 : 4,
+            elevation: glow ? 4 : 2,
+            overflow: "hidden",
           },
         ]}
       >
-        <Text
-          style={[
-            styles.initials,
-            { fontSize: size * 0.4 },
-          ]}
-        >
-          {initials}
-        </Text>
+        {image ? (
+          <Image
+            source={{ uri: image }}
+            style={{ width: size, height: size, borderRadius: size / 2 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <Text
+            style={[
+              styles.initials,
+              { fontSize: size * 0.4 },
+            ]}
+          >
+            {initials}
+          </Text>
+        )}
       </View>
       {online !== undefined && (
         <View

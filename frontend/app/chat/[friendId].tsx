@@ -29,12 +29,13 @@ type Msg = {
   sender_id: string;
   sender_alias: string;
   sender_color: string;
+  sender_avatar?: string | null;
   text?: string;
   image?: string;
   timestamp: string;
 };
 
-type Peer = { id: string; alias: string; avatar_color: string; online?: boolean };
+type Peer = { id: string; alias: string; avatar_color: string; avatar_image?: string | null; online?: boolean };
 
 function timeOf(iso: string) {
   try {
@@ -199,7 +200,7 @@ export default function PrivateChat() {
         </Pressable>
         {peer ? (
           <View style={styles.peerRow}>
-            <Avatar alias={peer.alias} color={peer.avatar_color} size={36} online />
+            <Avatar alias={peer.alias} color={peer.avatar_color} image={peer.avatar_image} size={36} online />
             <View>
               <Text style={[styles.peerAlias, { color: colors.textPrimary }]}>{peer.alias}</Text>
               <Text style={[styles.peerStatus, { color: peerTyping ? colors.neonSecondary : colors.textMuted }]}>
@@ -337,7 +338,7 @@ function TypingBubble({ peer, colors }: { peer: Peer; colors: any }) {
   }, []);
   return (
     <View style={[styles.row, styles.rowLeft, { marginTop: 4 }]} testID="typing-indicator">
-      <Avatar alias={peer.alias} color={peer.avatar_color} size={24} />
+      <Avatar alias={peer.alias} color={peer.avatar_color} image={peer.avatar_image} size={24} />
       <View
         style={[
           styles.typingBubble,

@@ -65,4 +65,9 @@ export const api = {
       body: JSON.stringify(payload),
     }),
   getUser: (uid: string) => jsonFetch(`/users/${uid}`),
+  updateAvatar: (uid: string, avatar_image: string | null) =>
+    jsonFetch(`/users/${uid}/avatar`, {
+      method: "POST",
+      body: JSON.stringify({ avatar_image }),
+    }),
 };
