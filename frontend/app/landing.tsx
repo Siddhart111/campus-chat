@@ -17,34 +17,63 @@ import { Ionicons } from "@expo/vector-icons";
 
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { useToast } from "@/src/components/Toast";
+import { useAuth } from "@/src/contexts/AuthContext";
 import Wordmark from "@/src/components/Wordmark";
 import { api } from "@/src/api";
 
 const UPES_EMAIL_RE = /^[a-zA-Z][a-zA-Z0-9._-]*\.\d+@stu\.upes\.ac\.in$/;
-const DOMAIN = "@stu.upes.ac.in";
+
+type Mode = "login" | "signup";
 
 export default function Landing() {
   const { colors } = useTheme();
   const { show } = useToast();
+  const { signIn } = useAuth();
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const normalized = email.trim().toLowerCase();
-  const valid = useMemo(() => UPES_EMAIL_RE.test(normalized), [normalized]);
+  const emailValid = useMemo(() => UPES_EMAIL_RE.test(normalized), [normalized]);
+  const pwValid = password.length >= 6 && password.length <= 8;
+  const pwMatch = mode === "signup" ? password === confirm && pwValid : pwValid;
+  const formValid = emailValid && pwValid && (mode === "login" || pwMatch);
 
-  const onSubmit = async () => {
-    if (!valid) {
+  const submit = async () => {
+    if (!emailValid) {
       show("Use your UPES email like parth.29555@stu.upes.ac.in", "error");
+      return;
+    }
+    if (!pwValid) {
+      show("Password must be 6 to 8 characters", "error");
+      return;
+    }
+    if (mode === "signup" && password !== confirm) {
+      show("Passwords do not match", "error");
       return;
     }
     try {
       setLoading(true);
-      await api.sendOtp(normalized);
-      show("OTP sent — check your UPES inbox 📩", "success");
-      router.push({ pathname: "/otp", params: { email: normalized } });
+      if (mode === "login") {
+        const res = await api.login(normalized, password);
+        await signIn(res.user);
+        show(`Welcome back, ${res.user.alias}`, "success");
+        router.replace("/(tabs)");
+      } else {
+        // Signup: trigger OTP and route to OTP screen with password staged
+        await api.sendOtp(normalized);
+        show("OTP sent — check your UPES inbox 📩", "success");
+        router.push({
+          pathname: "/otp",
+          params: { email: normalized, password, mode: "signup" },
+        });
+      }
     } catch (e: any) {
-      show(e.message || "Failed to send OTP", "error");
+      show(e.message || "Failed", "error");
     } finally {
       setLoading(false);
     }
@@ -52,10 +81,7 @@ export default function Landing() {
 
   return (
     <SafeAreaView style={[styles.flex, { backgroundColor: colors.bg }]} edges={["top", "bottom"]}>
-      <LinearGradient
-        colors={["#05050A", "#0E0A24", "#05050A"]}
-        style={StyleSheet.absoluteFill}
-      />
+      <LinearGradient colors={["#05050A", "#0E0A24", "#05050A"]} style={StyleSheet.absoluteFill} />
       <View style={[styles.blob, { backgroundColor: "#4F46E5" }]} />
       <View style={[styles.blob, styles.blob2, { backgroundColor: "#8B5CF6" }]} />
 
@@ -63,48 +89,57 @@ export default function Landing() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView
-          contentContainerStyle={styles.scroll}
-          keyboardShouldPersistTaps="handled"
-        >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
-            <Wordmark size={36} subtitle="Anonymous · Real · UPES only" />
+            <Wordmark size={34} subtitle="Anonymous · Real · UPES only" />
           </View>
 
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: colors.glass, borderColor: colors.border },
-            ]}
-          >
+          <View style={[styles.card, { backgroundColor: colors.glass, borderColor: colors.border }]}>
+            {/* Mode segmented control */}
+            <View style={[styles.seg, { borderColor: colors.border }]}>
+              <Pressable
+                testID="tab-login"
+                onPress={() => setMode("login")}
+                style={[styles.segBtn, mode === "login" && { backgroundColor: colors.neonPrimary }]}
+              >
+                <Text style={[styles.segText, { color: mode === "login" ? "#fff" : colors.textSecondary }]}>
+                  Log in
+                </Text>
+              </Pressable>
+              <Pressable
+                testID="tab-signup"
+                onPress={() => setMode("signup")}
+                style={[styles.segBtn, mode === "signup" && { backgroundColor: colors.neonPrimary }]}
+              >
+                <Text style={[styles.segText, { color: mode === "signup" ? "#fff" : colors.textSecondary }]}>
+                  Sign up
+                </Text>
+              </Pressable>
+            </View>
+
             <Text style={[styles.welcome, { color: colors.textPrimary }]}>
-              Welcome back, mate.
+              {mode === "login" ? "Welcome back, mate." : "Create your anonymous handle."}
             </Text>
             <Text style={[styles.welcomeSub, { color: colors.textSecondary }]}>
-              Log in or create your anonymous handle with your UPES student email.
+              {mode === "login"
+                ? "Log in with your UPES email and password."
+                : "We'll send a 6-digit OTP to verify your UPES email."}
             </Text>
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>
-              UPES STUDENT EMAIL
-            </Text>
-
+            {/* Email */}
+            <Text style={[styles.label, { color: colors.textSecondary }]}>UPES STUDENT EMAIL</Text>
             <View
               style={[
                 styles.inputWrap,
                 {
-                  borderColor: valid ? colors.neonSecondary : colors.border,
+                  borderColor: emailValid ? colors.neonSecondary : colors.border,
                   shadowColor: colors.neonSecondary,
-                  shadowOpacity: valid ? 0.5 : 0,
+                  shadowOpacity: emailValid ? 0.4 : 0,
                   backgroundColor: "rgba(255,255,255,0.03)",
                 },
               ]}
             >
-              <Ionicons
-                name="mail-outline"
-                size={18}
-                color={valid ? colors.neonSecondary : colors.textMuted}
-                style={{ marginRight: 8 }}
-              />
+              <Ionicons name="mail-outline" size={18} color={emailValid ? colors.neonSecondary : colors.textMuted} />
               <TextInput
                 testID="email-input"
                 value={email}
@@ -116,33 +151,90 @@ export default function Landing() {
                 keyboardType="email-address"
                 style={[styles.input, { color: colors.textPrimary }]}
               />
-              {valid ? (
-                <Ionicons name="checkmark-circle" size={20} color={colors.online} />
-              ) : null}
+              {emailValid ? <Ionicons name="checkmark-circle" size={18} color={colors.online} /> : null}
             </View>
 
-            {!valid && email.length > 0 ? (
-              <Text style={[styles.hint, { color: "#FF8B8B" }]}>
-                Must end with{" "}
-                <Text style={{ fontWeight: "700" }}>{DOMAIN}</Text>
-              </Text>
-            ) : (
-              <Text style={[styles.hint, { color: colors.textMuted }]}>
-                We&apos;ll send a 6-digit code to verify your UPES identity.
-              </Text>
-            )}
+            {/* Password */}
+            <Text style={[styles.label, { color: colors.textSecondary }]}>PASSWORD (6–8 CHARS)</Text>
+            <View
+              style={[
+                styles.inputWrap,
+                {
+                  borderColor: pwValid ? colors.neonSecondary : colors.border,
+                  shadowColor: colors.neonSecondary,
+                  shadowOpacity: pwValid ? 0.4 : 0,
+                  backgroundColor: "rgba(255,255,255,0.03)",
+                },
+              ]}
+            >
+              <Ionicons name="lock-closed-outline" size={18} color={pwValid ? colors.neonSecondary : colors.textMuted} />
+              <TextInput
+                testID="password-input"
+                value={password}
+                onChangeText={(v) => setPassword(v.slice(0, 8))}
+                placeholder="6–8 characters"
+                placeholderTextColor={colors.textMuted}
+                secureTextEntry={!showPw}
+                maxLength={8}
+                autoCapitalize="none"
+                autoCorrect={false}
+                style={[styles.input, { color: colors.textPrimary }]}
+              />
+              <Pressable onPress={() => setShowPw((s) => !s)} testID="toggle-password-visibility">
+                <Ionicons
+                  name={showPw ? "eye-off-outline" : "eye-outline"}
+                  size={18}
+                  color={colors.textMuted}
+                />
+              </Pressable>
+            </View>
 
+            {/* Confirm password (signup only) */}
+            {mode === "signup" ? (
+              <>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>CONFIRM PASSWORD</Text>
+                <View
+                  style={[
+                    styles.inputWrap,
+                    {
+                      borderColor:
+                        confirm.length > 0 && password === confirm ? colors.online : colors.border,
+                      backgroundColor: "rgba(255,255,255,0.03)",
+                    },
+                  ]}
+                >
+                  <Ionicons name="lock-closed-outline" size={18} color={colors.textMuted} />
+                  <TextInput
+                    testID="confirm-password-input"
+                    value={confirm}
+                    onChangeText={(v) => setConfirm(v.slice(0, 8))}
+                    placeholder="Repeat password"
+                    placeholderTextColor={colors.textMuted}
+                    secureTextEntry={!showPw}
+                    maxLength={8}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    style={[styles.input, { color: colors.textPrimary }]}
+                  />
+                  {confirm.length > 0 && password === confirm ? (
+                    <Ionicons name="checkmark-circle" size={18} color={colors.online} />
+                  ) : null}
+                </View>
+              </>
+            ) : null}
+
+            {/* Submit */}
             <Pressable
-              testID="send-otp-button"
-              onPress={onSubmit}
-              disabled={!valid || loading}
+              testID="auth-submit-button"
+              onPress={submit}
+              disabled={!formValid || loading}
               style={({ pressed }) => [
                 styles.cta,
                 {
-                  backgroundColor: valid ? colors.neonPrimary : "#2A2A40",
+                  backgroundColor: formValid ? colors.neonPrimary : "#2A2A40",
                   opacity: pressed ? 0.85 : 1,
                   shadowColor: colors.neonPrimary,
-                  shadowOpacity: valid ? 0.6 : 0,
+                  shadowOpacity: formValid ? 0.6 : 0,
                 },
               ]}
             >
@@ -150,29 +242,37 @@ export default function Landing() {
                 <ActivityIndicator color="#fff" />
               ) : (
                 <>
-                  <Text style={styles.ctaText}>Continue with email</Text>
+                  <Text style={styles.ctaText}>
+                    {mode === "login" ? "Log in" : "Continue · send OTP"}
+                  </Text>
                   <Ionicons name="arrow-forward" size={18} color="#fff" />
                 </>
               )}
             </Pressable>
 
-            <View style={styles.dividerRow}>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
-                NEW HERE?
+            <Pressable
+              testID="switch-mode-button"
+              onPress={() => setMode((m) => (m === "login" ? "signup" : "login"))}
+              style={{ alignSelf: "center", marginTop: 14 }}
+            >
+              <Text style={{ color: colors.textMuted, fontSize: 12 }}>
+                {mode === "login" ? (
+                  <>
+                    New to Campus Chat?{" "}
+                    <Text style={{ color: colors.neonSecondary, fontWeight: "700" }}>Sign up →</Text>
+                  </>
+                ) : (
+                  <>
+                    Already have an account?{" "}
+                    <Text style={{ color: colors.neonSecondary, fontWeight: "700" }}>Log in →</Text>
+                  </>
+                )}
               </Text>
-              <View style={[styles.divider, { backgroundColor: colors.border }]} />
-            </View>
-
-            <View style={styles.bullets}>
-              <Bullet text="Enter your UPES student mail — same flow for sign up." colors={colors} />
-              <Bullet text="You'll get an anonymous handle like NeonPanda07." colors={colors} />
-              <Bullet text="Your real name & ID stay hidden — always." colors={colors} />
-            </View>
+            </Pressable>
           </View>
 
           <Text style={[styles.foot, { color: colors.textMuted }]}>
-            UPES Dehradun students only · By continuing, you accept our community rules.
+            UPES Dehradun students only · Identities stay anonymous
           </Text>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -180,62 +280,50 @@ export default function Landing() {
   );
 }
 
-function Bullet({ text, colors }: { text: string; colors: any }) {
-  return (
-    <View style={styles.bulletRow}>
-      <View style={[styles.bulletDot, { backgroundColor: colors.neonSecondary }]} />
-      <Text style={[styles.bulletText, { color: colors.textSecondary }]}>{text}</Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: "center", padding: 22, gap: 24, paddingVertical: 40 },
-  brand: { alignItems: "center", marginBottom: 8 },
-  card: {
-    borderRadius: 28,
+  scroll: { flexGrow: 1, justifyContent: "center", padding: 20, gap: 22, paddingVertical: 32 },
+  brand: { alignItems: "center", marginBottom: 4 },
+  card: { borderRadius: 28, borderWidth: 1, padding: 20, gap: 8 },
+  seg: {
+    flexDirection: "row",
+    borderRadius: 12,
     borderWidth: 1,
-    padding: 22,
-    gap: 10,
+    padding: 4,
+    marginBottom: 12,
   },
-  welcome: { fontSize: 22, fontWeight: "800", letterSpacing: -0.4 },
-  welcomeSub: { fontSize: 13, lineHeight: 18, marginBottom: 10 },
-  label: { fontSize: 11, fontWeight: "700", letterSpacing: 2, marginTop: 4 },
+  segBtn: { flex: 1, alignItems: "center", paddingVertical: 9, borderRadius: 9 },
+  segText: { fontSize: 13, fontWeight: "700" },
+  welcome: { fontSize: 20, fontWeight: "800", letterSpacing: -0.3 },
+  welcomeSub: { fontSize: 12, lineHeight: 18, marginBottom: 8 },
+  label: { fontSize: 10, fontWeight: "700", letterSpacing: 2, marginTop: 8 },
   inputWrap: {
     flexDirection: "row",
     alignItems: "center",
+    gap: 8,
     borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    marginTop: 6,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 4,
     shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 12,
+    shadowRadius: 10,
   },
-  input: { flex: 1, fontSize: 15, fontWeight: "500" },
-  hint: { fontSize: 12, marginTop: 6 },
+  input: { flex: 1, fontSize: 14, fontWeight: "500" },
   cta: {
     flexDirection: "row",
     gap: 8,
-    marginTop: 14,
-    borderRadius: 18,
-    paddingVertical: 15,
+    marginTop: 16,
+    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
     shadowOffset: { width: 0, height: 0 },
-    shadowRadius: 18,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 5,
   },
-  ctaText: { color: "#fff", fontSize: 15, fontWeight: "700", letterSpacing: 0.5 },
-  dividerRow: { flexDirection: "row", alignItems: "center", gap: 10, marginTop: 18 },
-  divider: { flex: 1, height: 1 },
-  dividerText: { fontSize: 10, letterSpacing: 2, fontWeight: "700" },
-  bullets: { gap: 8, marginTop: 12 },
-  bulletRow: { flexDirection: "row", gap: 10, alignItems: "flex-start" },
-  bulletDot: { width: 6, height: 6, borderRadius: 3, marginTop: 7 },
-  bulletText: { flex: 1, fontSize: 12, lineHeight: 18 },
-  foot: { textAlign: "center", fontSize: 11, letterSpacing: 0.5, paddingHorizontal: 8 },
+  ctaText: { color: "#fff", fontSize: 14, fontWeight: "700", letterSpacing: 0.5 },
+  foot: { textAlign: "center", fontSize: 11, letterSpacing: 0.4, paddingHorizontal: 8 },
   blob: {
     position: "absolute",
     width: 280,

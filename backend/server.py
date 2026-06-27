@@ -68,6 +68,12 @@ class SendOtpRequest(BaseModel):
 class VerifyOtpRequest(BaseModel):
     email: str
     otp: str
+    password: Optional[str] = None  # required on signup, ignored on existing user
+
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 
 class User(BaseModel):
@@ -204,9 +210,35 @@ async def root():
 
 
 import re
+import time
+import bcrypt
 from email_service import send_otp_email, email_enabled
 
 UPES_EMAIL_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9._-]*\.\d+@stu\.upes\.ac\.in$")
+
+OTP_RATE_LIMIT_SEC = 30
+otp_last_sent: Dict[str, float] = {}
+
+
+def _check_password_format(password: str) -> Optional[str]:
+    if not isinstance(password, str):
+        return "Password must be text"
+    if len(password) < 6:
+        return "Password must be at least 6 characters"
+    if len(password) > 8:
+        return "Password must be at most 8 characters"
+    return None
+
+
+def _hash_password(pw: str) -> str:
+    return bcrypt.hashpw(pw.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+
+
+def _verify_password(pw: str, hashed: str) -> bool:
+    try:
+        return bcrypt.checkpw(pw.encode("utf-8"), hashed.encode("utf-8"))
+    except Exception:
+        return False
 
 
 @api_router.post("/auth/send-otp")
@@ -220,7 +252,16 @@ async def send_otp(req: SendOtpRequest):
     if not email_enabled():
         raise HTTPException(
             status_code=503,
-            detail="Email service is not configured. The admin must set RESEND_API_KEY on the server.",
+            detail="Email service is not configured. The admin must set SMTP credentials.",
+        )
+    # Rate limit
+    now = time.time()
+    last = otp_last_sent.get(email, 0)
+    if now - last < OTP_RATE_LIMIT_SEC:
+        wait = int(OTP_RATE_LIMIT_SEC - (now - last))
+        raise HTTPException(
+            status_code=429,
+            detail=f"Please wait {wait}s before requesting another OTP.",
         )
     otp = generate_otp()
     otp_store[email] = otp
@@ -229,11 +270,26 @@ async def send_otp(req: SendOtpRequest):
     except Exception as e:
         logger.exception("OTP email send failed for %s", email)
         otp_store.pop(email, None)
-        raise HTTPException(
-            status_code=502,
-            detail=f"Could not deliver OTP email: {e}",
-        )
+        raise HTTPException(status_code=502, detail=f"Could not deliver OTP email: {e}")
+    otp_last_sent[email] = now
     return {"ok": True, "email": email}
+
+
+@api_router.post("/auth/login")
+async def login(req: LoginRequest):
+    email = req.email.strip().lower()
+    if not UPES_EMAIL_RE.match(email):
+        raise HTTPException(status_code=400, detail="Use your UPES student email.")
+    user = await db.users.find_one({"college_id": email}, {"_id": 0})
+    if not user or not user.get("password_hash"):
+        raise HTTPException(
+            status_code=404,
+            detail="No account found for this email. Please sign up first.",
+        )
+    if not _verify_password(req.password, user["password_hash"]):
+        raise HTTPException(status_code=401, detail="Incorrect password.")
+    safe = {k: v for k, v in user.items() if k != "password_hash"}
+    return {"user": safe, "is_new": False}
 
 
 @api_router.post("/auth/verify-otp")
@@ -242,22 +298,39 @@ async def verify_otp(req: VerifyOtpRequest):
     expected = otp_store.get(email)
     if not expected or req.otp.strip() != expected:
         raise HTTPException(status_code=400, detail="Invalid OTP")
-    otp_store.pop(email, None)
     existing = await db.users.find_one({"college_id": email}, {"_id": 0})
     if existing:
-        return {"user": existing, "is_new": False}
+        # Returning user: keep their password (if any), require nothing more.
+        otp_store.pop(email, None)
+        safe = {k: v for k, v in existing.items() if k != "password_hash"}
+        return {"user": safe, "is_new": False}
+    # New user — password is required for signup
+    if not req.password:
+        raise HTTPException(status_code=400, detail="Password is required to sign up.")
+    pw_err = _check_password_format(req.password)
+    if pw_err:
+        raise HTTPException(status_code=400, detail=pw_err)
+    otp_store.pop(email, None)
     user = {
         "id": str(uuid.uuid4()),
         "college_id": email,
         "alias": generate_alias(),
         "avatar_color": generate_color(),
+        "password_hash": _hash_password(req.password),
         "created_at": now_iso(),
         "is_bot": False,
     }
     await db.users.insert_one(user.copy())
     await seed_relations_for_user(user["id"])
-    user.pop("_id", None)
-    return {"user": user, "is_new": True}
+    safe = {k: v for k, v in user.items() if k not in ("password_hash", "_id")}
+    return {"user": safe, "is_new": True}
+
+
+@api_router.get("/auth/exists/{email}")
+async def email_exists(email: str):
+    email = email.strip().lower()
+    u = await db.users.find_one({"college_id": email}, {"_id": 0, "id": 1})
+    return {"exists": bool(u)}
 
 
 @api_router.get("/users/{user_id}")

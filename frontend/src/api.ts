@@ -33,10 +33,15 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ email }),
     }),
-  verifyOtp: (email: string, otp: string) =>
+  verifyOtp: (email: string, otp: string, password?: string) =>
     jsonFetch("/auth/verify-otp", {
       method: "POST",
-      body: JSON.stringify({ email, otp }),
+      body: JSON.stringify({ email, otp, password }),
+    }),
+  login: (email: string, password: string) =>
+    jsonFetch("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
     }),
   groupMessages: () => jsonFetch("/messages/group"),
   privateMessages: (a: string, b: string) =>

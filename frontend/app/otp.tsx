@@ -20,7 +20,11 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { api } from "@/src/api";
 
 export default function Otp() {
-  const { email } = useLocalSearchParams<{ email: string }>();
+  const { email, password, mode } = useLocalSearchParams<{
+    email: string;
+    password?: string;
+    mode?: string;
+  }>();
   const { colors } = useTheme();
   const { show } = useToast();
   const { signIn } = useAuth();
@@ -69,7 +73,7 @@ export default function Otp() {
     if (!ready) return;
     setSubmitting(true);
     try {
-      const res = await api.verifyOtp(String(email), code);
+      const res = await api.verifyOtp(String(email), code, password ? String(password) : undefined);
       await signIn(res.user);
       show(`Welcome, ${res.user.alias} 🎉`, "success");
       router.replace("/(tabs)");
