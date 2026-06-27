@@ -1,21 +1,22 @@
-"""Email service — Resend integration for OTP delivery."""
+"""Email service — Gmail SMTP integration for OTP delivery."""
 import os
+import ssl
 import logging
-import resend
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
 
-RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "").strip()
-RESEND_FROM = os.environ.get(
-    "RESEND_FROM", "Campus Chat <onboarding@resend.dev>"
-).strip()
-
-if RESEND_API_KEY:
-    resend.api_key = RESEND_API_KEY
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "").strip()
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "").strip()
+SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Campus Chat").strip()
 
 
 def email_enabled() -> bool:
-    return bool(RESEND_API_KEY)
+    return bool(SMTP_USER and SMTP_PASSWORD)
 
 
 def _otp_html(to_email: str, code: str) -> str:
@@ -25,7 +26,7 @@ def _otp_html(to_email: str, code: str) -> str:
     <div style="background:linear-gradient(180deg,#0E0A24,#0B0918);border:1px solid rgba(139,92,246,0.3);border-radius:24px;padding:36px 28px;">
       <div style="text-align:center;margin-bottom:24px;">
         <div style="font-size:11px;letter-spacing:6px;color:#A1A1AA;text-transform:uppercase;margin-bottom:6px;">Campus Chat</div>
-        <div style="font-size:28px;font-weight:800;letter-spacing:4px;background:linear-gradient(90deg,#8B5CF6,#4F46E5);-webkit-background-clip:text;-webkit-text-fill-color:transparent;color:#8B5CF6;">UPES verified</div>
+        <div style="font-size:28px;font-weight:800;letter-spacing:4px;color:#8B5CF6;">UPES verified</div>
       </div>
       <p style="font-size:15px;line-height:22px;color:#D4D4D8;margin:0 0 20px 0;">Hey there 👋</p>
       <p style="font-size:15px;line-height:22px;color:#D4D4D8;margin:0 0 24px 0;">Use this one-time code to sign in to your anonymous Campus Chat account for <strong style="color:#fff;">{to_email}</strong>.</p>
@@ -42,16 +43,37 @@ def _otp_html(to_email: str, code: str) -> str:
 </body></html>"""
 
 
+def _otp_text(to_email: str, code: str) -> str:
+    return (
+        f"Campus Chat — UPES verification\n\n"
+        f"Your one-time code is: {code}\n\n"
+        f"This code is valid for 5 minutes. Do not share it with anyone.\n"
+        f"If you didn't request this, ignore this email.\n\n"
+        f"— Campus Chat (Anonymous · Real · UPES only)"
+    )
+
+
 def send_otp_email(to_email: str, code: str) -> dict:
-    """Send the OTP via Resend. Raises if RESEND_API_KEY is not configured."""
-    if not RESEND_API_KEY:
-        raise RuntimeError("RESEND_API_KEY is not set on the server")
-    params = {
-        "from": RESEND_FROM,
-        "to": [to_email],
-        "subject": f"Your Campus Chat code: {code}",
-        "html": _otp_html(to_email, code),
-    }
-    res = resend.Emails.send(params)
-    logger.info("Resend send → %s id=%s", to_email, res.get("id"))
-    return res
+    """Send the OTP via Gmail SMTP. Raises if SMTP not configured or send fails."""
+    if not email_enabled():
+        raise RuntimeError("SMTP credentials are not configured on the server")
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = f"Your Campus Chat code: {code}"
+    msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_USER}>"
+    msg["To"] = to_email
+    msg["Reply-To"] = SMTP_USER
+
+    msg.attach(MIMEText(_otp_text(to_email, code), "plain", "utf-8"))
+    msg.attach(MIMEText(_otp_html(to_email, code), "html", "utf-8"))
+
+    ctx = ssl.create_default_context()
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+        server.ehlo()
+        server.starttls(context=ctx)
+        server.ehlo()
+        server.login(SMTP_USER, SMTP_PASSWORD)
+        server.sendmail(SMTP_USER, [to_email], msg.as_string())
+
+    logger.info("SMTP OTP email sent to %s", to_email)
+    return {"ok": True, "to": to_email}
