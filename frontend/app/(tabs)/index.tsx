@@ -155,7 +155,10 @@ export default function GroupChat() {
           <Avatar alias={user.alias} color={user.avatar_color} image={user.avatar_image} size={36} glow />
           <View>
             <Text style={[styles.headerHi, { color: colors.textMuted }]}>YOU&apos;RE</Text>
-            <Text style={[styles.headerAlias, { color: colors.textPrimary }]}>{user.alias}</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={[styles.headerAlias, { color: colors.textPrimary }]}>{user.alias}</Text>
+              <GenderBadge gender={user.gender} size="xs" />
+            </View>
           </View>
         </View>
         <View

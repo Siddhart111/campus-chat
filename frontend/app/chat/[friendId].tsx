@@ -287,6 +287,11 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
   return (
     <View style={[styles.row, isSelf ? styles.rowRight : styles.rowLeft]}>
       <View style={{ maxWidth: "78%" }}>
+        {!isSelf && msg.sender_gender && msg.sender_gender !== "unknown" ? (
+          <View style={{ marginBottom: 4, marginLeft: 2, flexDirection: "row" }}>
+            <GenderBadge gender={msg.sender_gender} size="xs" />
+          </View>
+        ) : null}
         <View
           style={[
             styles.bubble,
