@@ -217,7 +217,7 @@ export default function GroupChat() {
             testID="message-input"
             value={text}
             onChangeText={setText}
-            placeholder="Drop a thought…"
+            placeholder="Send a message"
             placeholderTextColor={colors.textMuted}
             style={[styles.input, { color: colors.textPrimary }]}
             multiline

@@ -73,7 +73,7 @@ export default function TabsLayout() {
         options={{
           title: "Wall",
           tabBarIcon: ({ color, focused }) => (
-            <TabIcon name="megaphone" color={color} focused={focused} />
+            <TabIcon name="flame" color={color} focused={focused} />
           ),
         }}
       />

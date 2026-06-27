@@ -138,7 +138,7 @@ export default function Wall() {
             Ask anything · UPES replies anonymously
           </Text>
         </View>
-        <Ionicons name="megaphone" size={24} color={colors.neonSecondary} />
+        <Ionicons name="flame" size={24} color="#FF6B35" />
       </View>
 
       <KeyboardAvoidingView
