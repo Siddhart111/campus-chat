@@ -1,72 +1,26 @@
-import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Animated, Easing } from "react-native";
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 
 /**
- * Neon "Campus Chat" typographic wordmark.
- * Uses ONLY textShadow* properties so there's no boxy outline behind the text.
+ * Neon "Campus Chat" typographic wordmark — static soft glow (no animation).
  */
 export default function Wordmark({
   size = 44,
-  animate = true,
+  // `animate` kept for backwards compatibility; ignored.
+  animate: _animate = false,
   subtitle,
 }: {
   size?: number;
   animate?: boolean;
   subtitle?: string;
 }) {
-  const pulse = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!animate) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 1400,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0,
-          duration: 1400,
-          easing: Easing.inOut(Easing.ease),
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [animate, pulse]);
-
-  const textShadowRadius = pulse.interpolate({ inputRange: [0, 1], outputRange: [10, 24] });
-
   return (
     <View style={styles.wrap} testID="wordmark">
-      <Animated.Text
-        style={[
-          styles.text,
-          {
-            fontSize: size,
-            textShadowRadius,
-          },
-        ]}
-      >
-        CAMPUS
-      </Animated.Text>
+      <Text style={[styles.text, { fontSize: size }]}>CAMPUS</Text>
       <View style={styles.row}>
         <View style={styles.bar} />
-        <Animated.Text
-          style={[
-            styles.textLight,
-            {
-              fontSize: size * 0.95,
-              textShadowRadius,
-            },
-          ]}
-        >
-          CHAT
-        </Animated.Text>
+        <Text style={[styles.textLight, { fontSize: size * 0.95 }]}>CHAT</Text>
         <View style={styles.bar} />
       </View>
       {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
@@ -88,6 +42,7 @@ const styles = StyleSheet.create({
     letterSpacing: 6,
     textShadowColor: "#8B5CF6",
     textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
   },
   textLight: {
     color: "#C7BFFF",
@@ -95,6 +50,7 @@ const styles = StyleSheet.create({
     letterSpacing: 8,
     textShadowColor: "#4F46E5",
     textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 6,
     marginHorizontal: 10,
   },
   row: { flexDirection: "row", alignItems: "center", marginTop: 2 },
