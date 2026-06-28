@@ -15,6 +15,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "").strip()
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "").strip()
 SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Campus Chat").strip()
+SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", SMTP_USER).strip()
 
 
 def email_enabled() -> bool:
@@ -62,9 +63,9 @@ def send_otp_email(to_email: str, code: str) -> dict:
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Your Campus Chat code: {code}"
-    msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_USER}>"
+    msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL or SMTP_USER}>"
     msg["To"] = to_email
-    msg["Reply-To"] = SMTP_USER
+    msg["Reply-To"] = SMTP_FROM_EMAIL or SMTP_USER
 
     msg.attach(MIMEText(_otp_text(to_email, code), "plain", "utf-8"))
     msg.attach(MIMEText(_otp_html(to_email, code), "html", "utf-8"))
