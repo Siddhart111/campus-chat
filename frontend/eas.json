@@ -8,6 +8,12 @@
       "android": {
         "buildType": "app-bundle"
       }
+    },
+    "preview": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
+      }
     }
   }
 }
