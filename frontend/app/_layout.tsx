@@ -7,6 +7,7 @@ import { StatusBar } from "expo-status-bar";
 
 import { useIconFonts } from "@/src/hooks/use-icon-fonts";
 import { AuthProvider } from "@/src/contexts/AuthContext";
+import { RealtimeProvider } from "@/src/contexts/RealtimeContext";
 import { ThemeProvider, useTheme } from "@/src/contexts/ThemeContext";
 import { ToastProvider } from "@/src/components/Toast";
 
@@ -45,9 +46,11 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <ToastProvider>
-            <ThemedShell />
-          </ToastProvider>
+          <RealtimeProvider>
+            <ToastProvider>
+              <ThemedShell />
+            </ToastProvider>
+          </RealtimeProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>

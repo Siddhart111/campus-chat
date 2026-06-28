@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -20,12 +20,13 @@ import * as ImagePicker from "expo-image-picker";
 
 import { useTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/contexts/AuthContext";
+import { useRealtime } from "@/src/contexts/RealtimeContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
 import GenderBadge from "@/src/components/GenderBadge";
 import SwipeToReply from "@/src/components/SwipeToReply";
 import { ReplyQuoteBlock, ReplyComposerPreview, ReplyTo } from "@/src/components/ReplyBlocks";
-import { api, wsUrl } from "@/src/api";
+import { api } from "@/src/api";
 
 type Msg = {
   id: string;
@@ -61,8 +62,8 @@ export default function PrivateChat() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
   const [peerTyping, setPeerTyping] = useState(false);
-  const wsRef = useRef<WebSocket | null>(null);
   const listRef = useRef<FlatList>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -82,34 +83,29 @@ export default function PrivateChat() {
     })();
   }, [user, friendId, show]);
 
+  const { subscribe, sendMessage, sendTyping, connected } = useRealtime();
+
   useEffect(() => {
-    if (!user) return;
-    const ws = new WebSocket(wsUrl(user.id));
-    wsRef.current = ws;
-    ws.onmessage = (e) => {
-      try {
-        const data = JSON.parse(e.data);
-        if (data.type === "private_message") {
-          const m: Msg = data.message;
-          if (
-            (m.sender_id === user.id && (m as any).recipient_id === friendId) ||
-            (m.sender_id === friendId && (m as any).recipient_id === user.id)
-          ) {
-            setMessages((prev) => [...prev, m]);
-            if (m.sender_id === friendId) setPeerTyping(false);
-          }
-        } else if (data.type === "typing") {
-          if (data.from_id === friendId) {
-            setPeerTyping(!!data.is_typing);
-          }
+    if (!user || !friendId) return;
+    const handler = (data: any) => {
+      if (data.type === "private_message") {
+        const m: Msg = data.message;
+        if (
+          (m.sender_id === user.id && m.recipient_id === friendId) ||
+          (m.sender_id === friendId && m.recipient_id === user.id)
+        ) {
+          setMessages((prev) => [...prev, m]);
+          if (m.sender_id === friendId) setPeerTyping(false);
         }
-      } catch {}
+      } else if (data.type === "typing") {
+        if (data.from_id === friendId) {
+          setPeerTyping(!!data.is_typing);
+        }
+      }
     };
-    return () => {
-      ws.close();
-      wsRef.current = null;
-    };
-  }, [user, friendId]);
+    const unsubscribe = subscribe(handler);
+    return unsubscribe;
+  }, [user, friendId, subscribe]);
 
   useEffect(() => {
     if (messages.length) {
@@ -137,27 +133,23 @@ export default function PrivateChat() {
     }
   }, [show]);
 
-  const sendTyping = useCallback(
-    (isTyping: boolean) => {
-      const ws = wsRef.current;
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
-      ws.send(JSON.stringify({ type: "typing", to_id: friendId, is_typing: isTyping }));
-    },
-    [friendId]
-  );
-
   const onTextChange = (v: string) => {
     setText(v);
-    sendTyping(true);
+    if (friendId) {
+      sendTyping(String(friendId), true);
+    }
     if (typingTimer.current) clearTimeout(typingTimer.current);
-    typingTimer.current = setTimeout(() => sendTyping(false), 2000);
+    typingTimer.current = setTimeout(() => {
+      if (friendId) {
+        sendTyping(String(friendId), false);
+      }
+    }, 2000);
   };
 
   const send = useCallback(async () => {
     if (!user || !friendId) return;
     const t = text.trim();
     if (!t && !pendingImage) return;
-    const ws = wsRef.current;
     const payload = {
       type: "private_message",
       to_id: String(friendId),
@@ -165,9 +157,9 @@ export default function PrivateChat() {
       image: pendingImage || undefined,
       reply_to: replyTo || undefined,
     };
-    if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify(payload));
-      sendTyping(false);
+    if (connected) {
+      sendMessage(payload);
+      sendTyping(String(friendId), false);
     } else {
       try {
         const m = await api.sendMessage({
@@ -185,7 +177,7 @@ export default function PrivateChat() {
     setText("");
     setPendingImage(null);
     setReplyTo(null);
-  }, [text, pendingImage, user, friendId, replyTo, sendTyping, show]);
+  }, [text, pendingImage, user, friendId, replyTo, connected, sendMessage, sendTyping, show]);
 
   if (!user) return null;
 
@@ -247,6 +239,9 @@ export default function PrivateChat() {
               <Bubble msg={item} isSelf={item.sender_id === user.id} colors={colors} />
             </SwipeToReply>
           )}
+          ListHeaderComponent={replyTo ? (
+            <ReplyComposerPreview reply={replyTo} onCancel={() => setReplyTo(null)} colors={colors} />
+          ) : null}
           ListFooterComponent={peerTyping && peer ? <TypingBubble peer={peer} colors={colors} /> : null}
         />
 
@@ -348,7 +343,10 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
 }
 
 function TypingBubble({ peer, colors }: { peer: Peer; colors: any }) {
-  const dots = [useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current, useRef(new Animated.Value(0)).current];
+  const dots = useMemo(
+    () => [new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)],
+    []
+  );
   useEffect(() => {
     const anims = dots.map((d, i) =>
       Animated.loop(
@@ -361,7 +359,7 @@ function TypingBubble({ peer, colors }: { peer: Peer; colors: any }) {
     );
     anims.forEach((a) => a.start());
     return () => anims.forEach((a) => a.stop());
-  }, []);
+  }, [dots]);
   return (
     <View style={[styles.row, styles.rowLeft, { marginTop: 4 }]} testID="typing-indicator">
       <Avatar alias={peer.alias} color={peer.avatar_color} image={peer.avatar_image} size={24} />

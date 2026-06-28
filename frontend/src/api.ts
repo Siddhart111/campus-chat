@@ -1,4 +1,7 @@
-const BASE = process.env.EXPO_PUBLIC_BACKEND_URL || "";
+const DEFAULT_BACKEND_HOST =
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
+  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
+const BASE = DEFAULT_BACKEND_HOST.replace(/\/+$/, "");
 
 export const API = `${BASE}/api`;
 
