@@ -1,4 +1,6 @@
 """Email service — Gmail SMTP integration for OTP delivery."""
+from dotenv import load_dotenv
+load_dotenv()
 import os
 import ssl
 import logging
