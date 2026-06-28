@@ -1,13 +1,17 @@
-"""Email service — Gmail SMTP integration for OTP delivery."""
+"""Email service for OTP delivery through Resend with SMTP fallback."""
 from dotenv import load_dotenv
+
 load_dotenv()
-import os
-import ssl
+
 import logging
+import os
 import smtplib
+import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-#TEST
+
+import requests
+
 logger = logging.getLogger(__name__)
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
@@ -56,10 +60,42 @@ def _otp_text(to_email: str, code: str) -> str:
     )
 
 
+def build_resend_payload(to_email: str, code: str, from_email: str | None = None, from_name: str | None = None) -> dict:
+    sender_name = from_name or SMTP_FROM_NAME
+    sender_email = from_email or SMTP_FROM_EMAIL or SMTP_USER
+    return {
+        "from": f"{sender_name} <{sender_email}>",
+        "to": [to_email],
+        "subject": f"Your Campus Chat code: {code}",
+        "text": _otp_text(to_email, code),
+        "html": _otp_html(to_email, code),
+    }
+
+
 def send_otp_email(to_email: str, code: str) -> dict:
-    """Send the OTP via Gmail SMTP. Raises if SMTP not configured or send fails."""
+    """Send the OTP via Resend API. Falls back to SMTP if Resend is not configured."""
     if not email_enabled():
-        raise RuntimeError("SMTP credentials are not configured on the server")
+        raise RuntimeError("Email credentials are not configured on the server")
+
+    api_key = os.environ.get("RESEND_API_KEY", SMTP_PASSWORD).strip()
+    if api_key.startswith("re_") or os.environ.get("RESEND_API_KEY"):
+        payload = build_resend_payload(to_email, code)
+        try:
+            response = requests.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json=payload,
+                timeout=20,
+            )
+            response.raise_for_status()
+        except requests.HTTPError as exc:
+            detail = response.text if response is not None else str(exc)
+            raise RuntimeError(f"Resend delivery failed: {detail}") from exc
+        except requests.RequestException as exc:
+            raise RuntimeError(f"Resend request failed: {exc}") from exc
+
+        logger.info("Resend OTP email sent to %s", to_email)
+        return {"ok": True, "to": to_email}
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Your Campus Chat code: {code}"
