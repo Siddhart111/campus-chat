@@ -7,7 +7,7 @@ import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-
+#TEST
 logger = logging.getLogger(__name__)
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
