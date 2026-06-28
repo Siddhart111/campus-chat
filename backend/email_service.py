@@ -80,6 +80,7 @@ def send_otp_email(to_email: str, code: str) -> dict:
     api_key = os.environ.get("RESEND_API_KEY", SMTP_PASSWORD).strip()
     if api_key.startswith("re_") or os.environ.get("RESEND_API_KEY"):
         payload = build_resend_payload(to_email, code)
+        response = None
         try:
             response = requests.post(
                 "https://api.resend.com/emails",
