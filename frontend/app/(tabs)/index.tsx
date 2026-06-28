@@ -21,6 +21,8 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
 import GenderBadge from "@/src/components/GenderBadge";
+import SwipeToReply from "@/src/components/SwipeToReply";
+import { ReplyQuoteBlock, ReplyComposerPreview, ReplyTo } from "@/src/components/ReplyBlocks";
 import { api, wsUrl } from "@/src/api";
 
 type Msg = {
@@ -32,6 +34,7 @@ type Msg = {
   sender_gender?: "male" | "female" | "unknown";
   text?: string;
   image?: string;
+  reply_to?: { id: string; sender_alias: string; text: string } | null;
   timestamp: string;
 };
 
@@ -51,6 +54,7 @@ export default function GroupChat() {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [text, setText] = useState("");
   const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
   const [online, setOnline] = useState(73);
   const wsRef = useRef<WebSocket | null>(null);
   const listRef = useRef<FlatList>(null);
@@ -119,7 +123,12 @@ export default function GroupChat() {
     const t = text.trim();
     if (!t && !pendingImage) return;
     const ws = wsRef.current;
-    const payload = { type: "group_message", text: t || undefined, image: pendingImage || undefined };
+    const payload = {
+      type: "group_message",
+      text: t || undefined,
+      image: pendingImage || undefined,
+      reply_to: replyTo || undefined,
+    };
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(payload));
     } else {
@@ -138,7 +147,8 @@ export default function GroupChat() {
     }
     setText("");
     setPendingImage(null);
-  }, [text, pendingImage, user, show]);
+    setReplyTo(null);
+  }, [text, pendingImage, user, replyTo, show]);
 
   if (!user) return null;
 
@@ -201,16 +211,30 @@ export default function GroupChat() {
           keyExtractor={(m) => m.id}
           contentContainerStyle={styles.listContent}
           renderItem={({ item }) => (
-            <MessageBubble
-              msg={item}
-              isSelf={item.sender_id === user.id}
-              colors={colors}
-            />
+            <SwipeToReply
+              onReply={() =>
+                setReplyTo({
+                  id: item.id,
+                  sender_alias: item.sender_alias,
+                  text: item.text || (item.image ? "📷 Photo" : ""),
+                })
+              }
+            >
+              <MessageBubble
+                msg={item}
+                isSelf={item.sender_id === user.id}
+                colors={colors}
+              />
+            </SwipeToReply>
           )}
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         />
 
         {pendingImage ? null : null}
+
+        {replyTo ? (
+          <ReplyComposerPreview reply={replyTo} onCancel={() => setReplyTo(null)} colors={colors} />
+        ) : null}
 
         <View style={[styles.composer, { backgroundColor: colors.glassStrong, borderColor: colors.border }]}>
           <TextInput
@@ -278,7 +302,7 @@ function MessageBubble({
       <View style={{ maxWidth: "76%" }}>
         {!isSelf ? (
           <View style={styles.aliasRow}>
-            <Text style={[styles.aliasLabel, { color: msg.sender_color }]}>
+            <Text style={[styles.aliasLabel, { color: "#FFFFFF" }]}>
               {msg.sender_alias}
             </Text>
             <GenderBadge gender={msg.sender_gender} size="sm" />
@@ -302,6 +326,7 @@ function MessageBubble({
                 },
           ]}
         >
+          {msg.reply_to ? <ReplyQuoteBlock reply={msg.reply_to} colors={colors} /> : null}
           {msg.image ? (
             <Image source={{ uri: msg.image }} style={styles.msgImage} />
           ) : null}

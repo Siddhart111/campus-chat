@@ -711,6 +711,7 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
                     "sender_gender": sender.get("gender", "unknown"),
                     "text": data.get("text"),
                     "image": data.get("image"),
+                    "reply_to": data.get("reply_to"),
                     "recipient_id": None,
                     "timestamp": now_iso(),
                 }
@@ -729,6 +730,7 @@ async def websocket_endpoint(ws: WebSocket, user_id: str):
                     "sender_gender": sender.get("gender", "unknown"),
                     "text": data.get("text"),
                     "image": data.get("image"),
+                    "reply_to": data.get("reply_to"),
                     "recipient_id": to_id,
                     "timestamp": now_iso(),
                 }

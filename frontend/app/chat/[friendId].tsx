@@ -23,6 +23,8 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { useToast } from "@/src/components/Toast";
 import Avatar from "@/src/components/Avatar";
 import GenderBadge from "@/src/components/GenderBadge";
+import SwipeToReply from "@/src/components/SwipeToReply";
+import { ReplyQuoteBlock, ReplyComposerPreview, ReplyTo } from "@/src/components/ReplyBlocks";
 import { api, wsUrl } from "@/src/api";
 
 type Msg = {
@@ -34,6 +36,7 @@ type Msg = {
   sender_gender?: "male" | "female" | "unknown";
   text?: string;
   image?: string;
+  reply_to?: { id: string; sender_alias: string; text: string } | null;
   timestamp: string;
 };
 
@@ -160,6 +163,7 @@ export default function PrivateChat() {
       to_id: String(friendId),
       text: t || undefined,
       image: pendingImage || undefined,
+      reply_to: replyTo || undefined,
     };
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(payload));
@@ -180,7 +184,8 @@ export default function PrivateChat() {
     }
     setText("");
     setPendingImage(null);
-  }, [text, pendingImage, user, friendId, sendTyping, show]);
+    setReplyTo(null);
+  }, [text, pendingImage, user, friendId, replyTo, sendTyping, show]);
 
   if (!user) return null;
 
@@ -230,7 +235,17 @@ export default function PrivateChat() {
           keyExtractor={(m) => m.id}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <Bubble msg={item} isSelf={item.sender_id === user.id} colors={colors} />
+            <SwipeToReply
+              onReply={() =>
+                setReplyTo({
+                  id: item.id,
+                  sender_alias: item.sender_id === user.id ? "You" : item.sender_alias,
+                  text: item.text || (item.image ? "📷 Photo" : ""),
+                })
+              }
+            >
+              <Bubble msg={item} isSelf={item.sender_id === user.id} colors={colors} />
+            </SwipeToReply>
           )}
           ListFooterComponent={peerTyping && peer ? <TypingBubble peer={peer} colors={colors} /> : null}
         />
@@ -308,6 +323,7 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
                 },
           ]}
         >
+          {msg.reply_to ? <ReplyQuoteBlock reply={msg.reply_to} colors={colors} /> : null}
           {msg.image ? (
             <Image source={{ uri: msg.image }} style={styles.msgImage} />
           ) : null}
@@ -351,7 +367,7 @@ function TypingBubble({ peer, colors }: { peer: Peer; colors: any }) {
       <Avatar alias={peer.alias} color={peer.avatar_color} image={peer.avatar_image} size={24} />
       <View style={{ gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginLeft: 2 }}>
-          <Text style={{ color: peer.avatar_color, fontSize: 10, fontWeight: "700" }}>{peer.alias}</Text>
+          <Text style={{ color: "#FFFFFF", fontSize: 10, fontWeight: "700" }}>{peer.alias}</Text>
           <GenderBadge gender={peer.gender} size="xs" />
         </View>
         <View
