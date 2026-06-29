@@ -394,14 +394,14 @@ async def email_exists(email: str):
 @api_router.get("/auth/debug-smtp")
 async def debug_smtp():
     try:
-        from email_service import _resolve_smtp_host
+        from email_service import _resolve_smtp_host, SMTP_HOST, SMTP_PORT, SMTP_USER
 
         _resolve_smtp_host()
         return {
             "ok": True,
-            "smtp_host": os.environ.get("SMTP_HOST"),
-            "smtp_port": os.environ.get("SMTP_PORT"),
-            "smtp_user": os.environ.get("SMTP_USER"),
+            "smtp_host": SMTP_HOST,
+            "smtp_port": str(SMTP_PORT),
+            "smtp_user": SMTP_USER,
         }
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
