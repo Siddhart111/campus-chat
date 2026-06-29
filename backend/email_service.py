@@ -1,4 +1,9 @@
-"""Email service for OTP delivery through Brevo SMTP with Resend fallback."""
+"""Email service for OTP delivery through Resend.
+
+This module supports two modes:
+- Resend API delivery when RESEND_API_KEY is configured
+- Resend SMTP delivery when SMTP_PASSWORD is configured
+"""
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,16 +19,16 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp-relay.brevo.com").strip()
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.resend.com").strip()
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "").strip()
+SMTP_USER = os.environ.get("SMTP_USER", "resend").strip()
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "").strip()
 SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Campus Chat").strip()
 SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", SMTP_USER).strip()
 
 
 def email_enabled() -> bool:
-    return bool(SMTP_USER and SMTP_PASSWORD)
+    return bool(SMTP_USER and SMTP_PASSWORD) or bool(os.environ.get("RESEND_API_KEY", "").strip())
 
 
 def _otp_html(to_email: str, code: str) -> str:
