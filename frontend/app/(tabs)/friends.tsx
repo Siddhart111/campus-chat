@@ -41,7 +41,7 @@ export default function FriendsTab() {
   const { user } = useAuth();
   const { show } = useToast();
   const router = useRouter();
-  const [tab, setTab] = useState<"requests" | "friends">("requests");
+  const [tab, setTab] = useState<"requests" | "add" | "friends">("requests");
   const [requests, setRequests] = useState<FriendRequest[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [discover, setDiscover] = useState<DiscoverUser[]>([]);
@@ -140,6 +140,18 @@ export default function FriendsTab() {
           ) : null}
         </Pressable>
         <Pressable
+          testID="tab-add"
+          onPress={() => setTab("add")}
+          style={[
+            styles.segBtn,
+            tab === "add" && { backgroundColor: colors.neonPrimary },
+          ]}
+        >
+          <Text style={[styles.segText, { color: tab === "add" ? "#fff" : colors.textSecondary }]}>
+            Add Friend
+          </Text>
+        </Pressable>
+        <Pressable
           testID="tab-friends"
           onPress={() => setTab("friends")}
           style={[
@@ -201,39 +213,49 @@ export default function FriendsTab() {
             ))
           )}
 
-          <Text style={[styles.sectionLabel, { color: colors.textMuted, marginTop: 24 }]}>
+        </ScrollView>
+      ) : tab === "add" ? (
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.neonSecondary} />}
+        >
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>
             DISCOVER PEOPLE
           </Text>
-          {discover.map((d) => (
-            <View
-              key={d.id}
-              style={[styles.card, { backgroundColor: colors.glass, borderColor: colors.border }]}
-            >
-              <Avatar alias={d.alias} color={d.avatar_color} image={d.avatar_image} size={44} />
-              <View style={{ flex: 1, marginLeft: 12 }}>
-                <View style={styles.nameRow}>
-                  <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{d.alias}</Text>
-                  <GenderBadge gender={d.gender} size="xs" />
-                </View>
-                <Text style={[styles.cardSub, { color: colors.textMuted }]}>
-                  Anonymous · UPES verified
-                </Text>
-              </View>
-              <Pressable
-                testID={`discover-${d.id}`}
-                onPress={() => sendReq(d.id, d.alias)}
-                style={[
-                  styles.smallBtn,
-                  { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.neonSecondary },
-                ]}
+          {discover.length === 0 ? (
+            <EmptyState text="No new people to add right now." colors={colors} />
+          ) : (
+            discover.map((d) => (
+              <View
+                key={d.id}
+                style={[styles.card, { backgroundColor: colors.glass, borderColor: colors.border }]}
               >
-                <Ionicons name="person-add" size={14} color={colors.neonSecondary} />
-                <Text style={[styles.smallBtnText, { color: colors.neonSecondary, marginLeft: 4 }]}>
-                  Add
-                </Text>
-              </Pressable>
-            </View>
-          ))}
+                <Avatar alias={d.alias} color={d.avatar_color} image={d.avatar_image} size={44} />
+                <View style={{ flex: 1, marginLeft: 12 }}>
+                  <View style={styles.nameRow}>
+                    <Text style={[styles.cardAlias, { color: colors.textPrimary }]}>{d.alias}</Text>
+                    <GenderBadge gender={d.gender} size="xs" />
+                  </View>
+                  <Text style={[styles.cardSub, { color: colors.textMuted }]}>
+                    Anonymous · UPES verified
+                  </Text>
+                </View>
+                <Pressable
+                  testID={`discover-${d.id}`}
+                  onPress={() => sendReq(d.id, d.alias)}
+                  style={[
+                    styles.smallBtn,
+                    { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.neonSecondary },
+                  ]}
+                >
+                  <Ionicons name="person-add" size={14} color={colors.neonSecondary} />
+                  <Text style={[styles.smallBtnText, { color: colors.neonSecondary, marginLeft: 4 }]}>
+                    Add
+                  </Text>
+                </Pressable>
+              </View>
+            ))
+          )}
         </ScrollView>
       ) : (
         <FlatList
