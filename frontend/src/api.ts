@@ -1,6 +1,9 @@
+import Constants from "expo-constants";
+
 const DEFAULT_BACKEND_HOST =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
-  (typeof window !== "undefined" ? window.location.origin : "http://localhost:8000");
+  (Constants.expoConfig?.extra as { backendUrl?: string })?.backendUrl ||
+  "https://campus-chat-production.up.railway.app";
 const BASE = DEFAULT_BACKEND_HOST.replace(/\/+$/, "");
 
 export const API = `${BASE}/api`;
