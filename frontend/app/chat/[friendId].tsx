@@ -296,7 +296,7 @@ export default function PrivateChat() {
 function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: any }) {
   return (
     <View style={[styles.row, isSelf ? styles.rowRight : styles.rowLeft]}>
-      <View style={{ maxWidth: "78%" }}>
+      <View style={{ maxWidth: "72%" }}>
         {!isSelf && msg.sender_gender && msg.sender_gender !== "unknown" ? (
           <View style={{ marginBottom: 4, marginLeft: 2, flexDirection: "row" }}>
             <GenderBadge gender={msg.sender_gender} size="xs" />
@@ -323,20 +323,21 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
             <Image source={{ uri: msg.image }} style={styles.msgImage} />
           ) : null}
           {msg.text ? (
-            <Text style={{ color: isSelf ? "#fff" : colors.textPrimary, fontSize: 15, lineHeight: 20 }}>
+            <Text style={{ color: isSelf ? "#fff" : colors.textPrimary, fontSize: 14, lineHeight: 18 }}>
               {msg.text}
             </Text>
           ) : null}
-          <Text
-            style={[
-              styles.time,
-              { color: isSelf ? "rgba(255,255,255,0.7)" : colors.textMuted },
-            ]}
-          >
-            {isSelf ? "You · " : ""}
-            {timeOf(msg.timestamp)}
-          </Text>
         </View>
+        <Text
+          style={[
+            styles.time,
+            isSelf ? styles.timeRight : styles.timeLeft,
+            { color: colors.textMuted },
+          ]}
+        >
+          {isSelf ? "You · " : ""}
+          {timeOf(msg.timestamp)}
+        </Text>
       </View>
     </View>
   );
@@ -413,12 +414,23 @@ const styles = StyleSheet.create({
   rowLeft: { justifyContent: "flex-start", alignSelf: "flex-start" },
   rowRight: { justifyContent: "flex-end", alignSelf: "flex-end" },
   bubble: {
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 18,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 16,
   },
-  msgImage: { width: 200, height: 160, borderRadius: 10, marginBottom: 6 },
-  time: { fontSize: 10, marginTop: 4, alignSelf: "flex-end" },
+  msgImage: { width: 180, height: 140, borderRadius: 10, marginBottom: 6 },
+  time: {
+    fontSize: 10,
+    marginTop: 4,
+  },
+  timeLeft: {
+    alignSelf: "flex-start",
+    marginLeft: 6,
+  },
+  timeRight: {
+    alignSelf: "flex-end",
+    marginRight: 6,
+  },
   composer: {
     flexDirection: "row",
     alignItems: "flex-end",
