@@ -306,7 +306,10 @@ async def send_otp(req: SendOtpRequest):
     except Exception as e:
         logger.exception("OTP email send failed for %s", email)
         _clear_otp(email)
-        raise HTTPException(status_code=502, detail="Could not deliver OTP email")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not deliver OTP email: {type(e).__name__}: {e}",
+        )
     otp_last_sent[email] = now
     return {"ok": True, "email": email}
 
