@@ -9,6 +9,7 @@ load_dotenv()
 
 import logging
 import os
+import socket
 import smtplib
 import ssl
 from email.mime.multipart import MIMEMultipart
@@ -26,6 +27,15 @@ SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", SMTP_USER).strip()
 
 def email_enabled() -> bool:
     return bool(SMTP_USER and SMTP_PASSWORD)
+
+
+def _resolve_smtp_host() -> None:
+    try:
+        socket.getaddrinfo(SMTP_HOST, SMTP_PORT)
+    except Exception as exc:
+        raise RuntimeError(
+            f"SMTP host resolution failed for {SMTP_HOST}:{SMTP_PORT} - {exc}"
+        ) from exc
 
 
 def _otp_html(to_email: str, code: str) -> str:
@@ -76,13 +86,19 @@ def send_otp_email(to_email: str, code: str) -> dict:
     msg.attach(MIMEText(_otp_text(to_email, code), "plain", "utf-8"))
     msg.attach(MIMEText(_otp_html(to_email, code), "html", "utf-8"))
 
+    _resolve_smtp_host()
     ctx = ssl.create_default_context()
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
-        server.ehlo()
-        server.starttls(context=ctx)
-        server.ehlo()
-        server.login(SMTP_USER, SMTP_PASSWORD)
-        server.sendmail(SMTP_USER, [to_email], msg.as_string())
+    if SMTP_PORT == 465:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20, context=ctx) as server:
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_USER, [to_email], msg.as_string())
+    else:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
+            server.ehlo()
+            server.starttls(context=ctx)
+            server.ehlo()
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_USER, [to_email], msg.as_string())
 
     logger.info("SMTP OTP email sent to %s", to_email)
     return {"ok": True, "to": to_email}

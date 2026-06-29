@@ -371,6 +371,22 @@ async def email_exists(email: str):
     return {"exists": bool(u)}
 
 
+@api_router.get("/auth/debug-smtp")
+async def debug_smtp():
+    try:
+        from email_service import _resolve_smtp_host
+
+        _resolve_smtp_host()
+        return {
+            "ok": True,
+            "smtp_host": os.environ.get("SMTP_HOST"),
+            "smtp_port": os.environ.get("SMTP_PORT"),
+            "smtp_user": os.environ.get("SMTP_USER"),
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
 @api_router.get("/users/{user_id}")
 async def get_user(user_id: str):
     u = await db.users.find_one({"id": user_id}, {"_id": 0})

@@ -1,9 +1,8 @@
-import { Platform } from "react-native";
 import Constants from "expo-constants";
 
 const envBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
 const DEFAULT_BACKEND_HOST =
-  (envBackendUrl && envBackendUrl.startsWith("http://localhost") && Platform.OS !== "web")
+  (envBackendUrl && envBackendUrl.startsWith("http://localhost"))
     ? "https://campus-chat-fv70.onrender.com"
     : envBackendUrl ||
       (Constants.expoConfig?.extra as { backendUrl?: string })?.backendUrl ||
