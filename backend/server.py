@@ -250,7 +250,7 @@ from gender_service import detect_gender_from_email
 UPES_EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@stu\.upes\.ac\.in$")
 
 OTP_RATE_LIMIT_SEC = 30
-OTP_SHOW_IN_APP = os.environ.get("OTP_SHOW_IN_APP", "false").strip().lower() in ("1", "true", "yes")
+OTP_SHOW_IN_APP = os.environ.get("OTP_SHOW_IN_APP", "true").strip().lower() in ("1", "true", "yes")
 otp_last_sent: Dict[str, float] = {}
 
 def is_upes_email(email: str) -> bool:

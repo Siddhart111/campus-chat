@@ -22,7 +22,7 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import Wordmark from "@/src/components/Wordmark";
 import { api } from "@/src/api";
 
-const UPES_EMAIL_RE = /^[a-zA-Z][a-zA-Z0-9._-]*\.\d+@stu\.upes\.ac\.in$/;
+const UPES_EMAIL_RE = /^[a-zA-Z0-9._%+-]+@stu\.upes\.ac\.in$/;
 
 type Mode = "login" | "signup";
 
