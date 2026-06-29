@@ -96,7 +96,7 @@ export default function Landing() {
         style={styles.flex}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="always">
           <View style={styles.brand}>
             <Wordmark size={34} subtitle="Anonymous · Real · Fun" />
           </View>
