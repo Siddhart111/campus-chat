@@ -17,12 +17,18 @@ from email.mime.text import MIMEText
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "").strip()
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").strip()
-SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Campus Chat").strip()
-SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", SMTP_USER).strip()
+def _clean_env(value: str | None, default: str = "") -> str:
+    if value is None:
+        return default
+    return value.strip().strip('"').strip("'")
+
+
+SMTP_HOST = _clean_env(os.environ.get("SMTP_HOST"), "smtp.gmail.com")
+SMTP_PORT = int(_clean_env(os.environ.get("SMTP_PORT"), "587"))
+SMTP_USER = _clean_env(os.environ.get("SMTP_USER"))
+SMTP_PASSWORD = _clean_env(os.environ.get("SMTP_PASSWORD"))
+SMTP_FROM_NAME = _clean_env(os.environ.get("SMTP_FROM_NAME"), "Campus Chat")
+SMTP_FROM_EMAIL = _clean_env(os.environ.get("SMTP_FROM_EMAIL"), SMTP_USER)
 
 
 def email_enabled() -> bool:

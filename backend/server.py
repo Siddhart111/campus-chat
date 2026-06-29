@@ -7,6 +7,7 @@ import logging
 import random
 import json
 import asyncio
+import secrets
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
@@ -57,7 +58,7 @@ def generate_color():
 
 
 def generate_otp():
-    return str(random.randint(100000, 999999))
+    return f"{secrets.randbelow(900000) + 100000:06d}"
 
 
 # ---------------- Models ----------------
@@ -212,7 +213,26 @@ manager = ConnectionManager()
 
 
 # ---------------- OTP store (in-memory, demo) ----------------
-otp_store: Dict[str, str] = {}
+OTP_EXPIRY_SEC = 300
+otp_store: Dict[str, Dict[str, object]] = {}
+
+
+def _store_otp(email: str, code: str) -> None:
+    otp_store[email] = {"code": code, "sent_at": time.time()}
+
+
+def _clear_otp(email: str) -> None:
+    otp_store.pop(email, None)
+
+
+def _otp_is_valid(email: str, otp: str) -> bool:
+    entry = otp_store.get(email)
+    if not entry:
+        return False
+    if time.time() - entry["sent_at"] > OTP_EXPIRY_SEC:
+        _clear_otp(email)
+        return False
+    return entry["code"] == otp.strip()
 
 
 # ---------------- Routes ----------------
@@ -280,13 +300,13 @@ async def send_otp(req: SendOtpRequest):
             detail=f"Please wait {wait}s before requesting another OTP.",
         )
     otp = generate_otp()
-    otp_store[email] = otp
+    _store_otp(email, otp)
     try:
         send_otp_email(email, otp)
     except Exception as e:
         logger.exception("OTP email send failed for %s", email)
-        otp_store.pop(email, None)
-        raise HTTPException(status_code=502, detail=f"Could not deliver OTP email: {e}")
+        _clear_otp(email)
+        raise HTTPException(status_code=502, detail="Could not deliver OTP email")
     otp_last_sent[email] = now
     return {"ok": True, "email": email}
 
@@ -311,9 +331,9 @@ async def login(req: LoginRequest):
 @api_router.post("/auth/verify-otp")
 async def verify_otp(req: VerifyOtpRequest):
     email = req.email.strip().lower()
-    expected = otp_store.get(email)
-    if not expected or req.otp.strip() != expected:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
+    if not _otp_is_valid(email, req.otp):
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    _clear_otp(email)
     existing = await db.users.find_one({"college_id": email}, {"_id": 0})
     if existing:
         # Returning user: keep their password (if any), require nothing more.
@@ -347,9 +367,9 @@ async def reset_password(req: ResetPasswordRequest):
     email = req.email.strip().lower()
     if not UPES_EMAIL_RE.match(email):
         raise HTTPException(status_code=400, detail="Use your UPES student email.")
-    expected = otp_store.get(email)
-    if not expected or req.otp.strip() != expected:
-        raise HTTPException(status_code=400, detail="Invalid OTP")
+    if not _otp_is_valid(email, req.otp):
+        raise HTTPException(status_code=400, detail="Invalid or expired OTP")
+    _clear_otp(email)
     user = await db.users.find_one({"college_id": email}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="No account found for this email.")
@@ -805,12 +825,22 @@ async def _bot_reply(bot: dict, to_id: str):
 
 
 # ---------------- Lifecycle ----------------
+allowed_origins = [
+    origin.strip()
+    for origin in os.environ.get("ALLOWED_ORIGINS", ",".join([
+        "https://campus-chat-fv70.onrender.com",
+        "http://localhost:19006",
+        "http://127.0.0.1:19006",
+    ])).split(",")
+    if origin.strip()
+]
+
 app.include_router(api_router)
 app.add_middleware(
     CORSMiddleware,
-    allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_origins=allowed_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
