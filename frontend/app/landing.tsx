@@ -9,6 +9,7 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -98,6 +99,14 @@ export default function Landing() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
             <Wordmark size={34} subtitle="Anonymous · Real · Fun" />
+          </View>
+
+          <View style={styles.heroImageContainer}>
+            <Image
+              source={require("../assets/images/app-image.png")}
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
           </View>
 
           {/* College selector pill */}
@@ -389,6 +398,16 @@ const styles = StyleSheet.create({
   },
   ctaText: { color: "#fff", fontSize: 14, fontWeight: "700", letterSpacing: 0.5 },
   foot: { textAlign: "center", fontSize: 11, letterSpacing: 0.4, paddingHorizontal: 8 },
+  heroImageContainer: {
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  heroImage: {
+    width: "100%",
+    maxWidth: 320,
+    height: 180,
+    borderRadius: 24,
+  },
   blob: {
     position: "absolute",
     width: 280,
