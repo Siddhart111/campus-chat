@@ -1,8 +1,7 @@
-"""Email service for OTP delivery through Resend.
+"""Email service for OTP delivery through SMTP.
 
-This module supports two modes:
-- Resend API delivery when RESEND_API_KEY is configured
-- Resend SMTP delivery when SMTP_PASSWORD is configured
+This module sends OTP emails through SMTP using the configured SMTP_HOST,
+SMTP_USER, and SMTP_PASSWORD values.
 """
 from dotenv import load_dotenv
 
@@ -15,20 +14,18 @@ import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-import requests
-
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.resend.com").strip()
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USER = os.environ.get("SMTP_USER", "resend").strip()
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "").strip()
+SMTP_USER = os.environ.get("SMTP_USER", "").strip()
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").strip()
 SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "Campus Chat").strip()
 SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", SMTP_USER).strip()
 
 
 def email_enabled() -> bool:
-    return bool(SMTP_USER and SMTP_PASSWORD) or bool(os.environ.get("RESEND_API_KEY", "").strip())
+    return bool(SMTP_USER and SMTP_PASSWORD)
 
 
 def _otp_html(to_email: str, code: str) -> str:
@@ -65,43 +62,10 @@ def _otp_text(to_email: str, code: str) -> str:
     )
 
 
-def build_resend_payload(to_email: str, code: str, from_email: str | None = None, from_name: str | None = None) -> dict:
-    sender_name = from_name or SMTP_FROM_NAME
-    sender_email = from_email or SMTP_FROM_EMAIL or SMTP_USER
-    return {
-        "from": f"{sender_name} <{sender_email}>",
-        "to": [to_email],
-        "subject": f"Your Campus Chat code: {code}",
-        "text": _otp_text(to_email, code),
-        "html": _otp_html(to_email, code),
-    }
-
-
 def send_otp_email(to_email: str, code: str) -> dict:
-    """Send the OTP via Resend API. Falls back to SMTP if Resend is not configured."""
+    """Send the OTP via SMTP."""
     if not email_enabled():
         raise RuntimeError("Email credentials are not configured on the server")
-
-    api_key = os.environ.get("RESEND_API_KEY", SMTP_PASSWORD).strip()
-    if api_key.startswith("re_") or os.environ.get("RESEND_API_KEY"):
-        payload = build_resend_payload(to_email, code)
-        response = None
-        try:
-            response = requests.post(
-                "https://api.resend.com/emails",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json=payload,
-                timeout=20,
-            )
-            response.raise_for_status()
-        except requests.HTTPError as exc:
-            detail = response.text if response is not None else str(exc)
-            raise RuntimeError(f"Resend delivery failed: {detail}") from exc
-        except requests.RequestException as exc:
-            raise RuntimeError(f"Resend request failed: {exc}") from exc
-
-        logger.info("Resend OTP email sent to %s", to_email)
-        return {"ok": True, "to": to_email}
 
     msg = MIMEMultipart("alternative")
     msg["Subject"] = f"Your Campus Chat code: {code}"

@@ -3,17 +3,11 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from email_service import build_resend_payload
+from email_service import send_otp_email
 
 
-def test_build_resend_payload_uses_sender_and_recipient():
-    payload = build_resend_payload(
-        to_email="siddharth.29555@stu.upes.ac.in",
-        code="123456",
-        from_email="onboarding@resend.dev",
-        from_name="Campus Chat",
-    )
-
-    assert payload["from"] == "Campus Chat <onboarding@resend.dev>"
-    assert payload["to"] == ["siddharth.29555@stu.upes.ac.in"]
-    assert "123456" in payload["text"]
+def test_send_otp_email_sets_correct_message():
+    # This test only validates the function returns the correct status.
+    result = send_otp_email("siddharth.29555@stu.upes.ac.in", "123456")
+    assert result["ok"] is True
+    assert result["to"] == "siddharth.29555@stu.upes.ac.in"

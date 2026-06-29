@@ -3,7 +3,7 @@
   "build": {
     "production": {
       "env": {
-        "EXPO_PUBLIC_BACKEND_URL": "https://campus-chat-production.up.railway.app"
+        "EXPO_PUBLIC_BACKEND_URL": "https://campus-chat-fv70.onrender.com"
       },
       "android": {
         "buildType": "app-bundle"

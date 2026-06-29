@@ -3,7 +3,7 @@ import Constants from "expo-constants";
 const DEFAULT_BACKEND_HOST =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   (Constants.expoConfig?.extra as { backendUrl?: string })?.backendUrl ||
-  "https://campus-chat-production.up.railway.app";
+  "https://campus-chat-fv70.onrender.com";
 const BASE = DEFAULT_BACKEND_HOST.replace(/\/+$/, "");
 
 export const API = `${BASE}/api`;
