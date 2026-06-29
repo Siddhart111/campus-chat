@@ -227,10 +227,13 @@ import bcrypt
 from email_service import send_otp_email, email_enabled
 from gender_service import detect_gender_from_email
 
-UPES_EMAIL_RE = re.compile(r"^[a-zA-Z][a-zA-Z0-9._-]*\.\d+@stu\.upes\.ac\.in$")
+UPES_EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@stu\.upes\.ac\.in$")
 
 OTP_RATE_LIMIT_SEC = 30
 otp_last_sent: Dict[str, float] = {}
+
+def is_upes_email(email: str) -> bool:
+    return bool(UPES_EMAIL_RE.match(email))
 
 
 def _check_password_format(password: str) -> Optional[str]:
