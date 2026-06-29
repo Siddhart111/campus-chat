@@ -1,4 +1,4 @@
-"""Email service for OTP delivery through Resend with SMTP fallback."""
+"""Email service for OTP delivery through Brevo SMTP with Resend fallback."""
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -14,7 +14,7 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp-relay.brevo.com").strip()
 SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "").strip()
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "").strip()
