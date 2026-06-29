@@ -20,16 +20,21 @@ import { useAuth } from "@/src/contexts/AuthContext";
 import { api } from "@/src/api";
 
 export default function Otp() {
-  const { email, password, mode } = useLocalSearchParams<{
+  const { email, password, mode, debugOtp } = useLocalSearchParams<{
     email: string;
     password?: string;
     mode?: string;
+    debugOtp?: string;
   }>();
   const { colors } = useTheme();
   const { show } = useToast();
   const { signIn } = useAuth();
   const router = useRouter();
 
+  const isCollegeEmail = String(email).toLowerCase().endsWith("@stu.upes.ac.in");
+  const [currentDebugOtp, setCurrentDebugOtp] = useState<string | undefined>(
+    isCollegeEmail && typeof debugOtp === "string" ? debugOtp : undefined
+  );
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", ""]);
   const [focusIdx, setFocusIdx] = useState(0);
   const [seconds, setSeconds] = useState(60);
@@ -86,9 +91,14 @@ export default function Otp() {
 
   const resend = async () => {
     try {
-      await api.sendOtp(String(email));
+      const res = await api.sendOtp(String(email));
       setSeconds(60);
-      show("New OTP sent — check your inbox 📩", "success");
+      if (typeof res?.debug_otp === "string") {
+        setCurrentDebugOtp(res.debug_otp);
+        show("New OTP generated — use the code shown below.", "success");
+      } else {
+        show("New OTP sent — check your inbox 📩", "success");
+      }
     } catch (e: any) {
       show(e.message || "Failed to resend", "error");
     }
@@ -120,9 +130,17 @@ export default function Otp() {
             Sent to{" "}
             <Text style={{ color: colors.neonSecondary }}>{email}</Text>
           </Text>
-          <Text style={[styles.demo, { color: colors.textMuted }]}>
-            📩 Open your UPES inbox to find the 6-digit code.
-          </Text>
+          {isCollegeEmail && currentDebugOtp ? (
+            <View style={[styles.debugCard, { borderColor: colors.neonSecondary, backgroundColor: colors.glass }]}> 
+              <Text style={[styles.debugLabel, { color: colors.neonSecondary }]}>In-app OTP mode enabled</Text>
+              <Text style={[styles.debugCode, { color: colors.textPrimary }]}>{currentDebugOtp}</Text>
+              <Text style={[styles.debugHint, { color: colors.textMuted }]}>Use this code directly in the app.</Text>
+            </View>
+          ) : (
+            <Text style={[styles.demo, { color: colors.textMuted }]}> 
+              📩 Open your UPES inbox to find the 6-digit code.
+            </Text>
+          )}
 
           <View style={styles.boxes}>
             {digits.map((d, i) => {
@@ -210,6 +228,16 @@ const styles = StyleSheet.create({
   h1: { fontSize: 28, fontWeight: "800", letterSpacing: -0.5 },
   sub: { fontSize: 14 },
   demo: { fontSize: 12, marginTop: -8 },
+  debugCard: {
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 16,
+    marginTop: 12,
+    gap: 6,
+  },
+  debugLabel: { fontSize: 12, letterSpacing: 0.8, textTransform: "uppercase" },
+  debugCode: { fontSize: 30, fontWeight: "800" },
+  debugHint: { fontSize: 12, lineHeight: 18 },
   boxes: {
     flexDirection: "row",
     justifyContent: "space-between",

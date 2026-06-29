@@ -250,6 +250,7 @@ from gender_service import detect_gender_from_email
 UPES_EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@stu\.upes\.ac\.in$")
 
 OTP_RATE_LIMIT_SEC = 30
+OTP_SHOW_IN_APP = os.environ.get("OTP_SHOW_IN_APP", "false").strip().lower() in ("1", "true", "yes")
 otp_last_sent: Dict[str, float] = {}
 
 def is_upes_email(email: str) -> bool:
@@ -285,7 +286,7 @@ async def send_otp(req: SendOtpRequest):
             status_code=400,
             detail="Use your UPES email like parth.29555@stu.upes.ac.in",
         )
-    if not email_enabled():
+    if not OTP_SHOW_IN_APP and not email_enabled():
         raise HTTPException(
             status_code=503,
             detail="Email service is not configured. The admin must set SMTP credentials.",
@@ -302,7 +303,10 @@ async def send_otp(req: SendOtpRequest):
     otp = generate_otp()
     _store_otp(email, otp)
     try:
-        send_otp_email(email, otp)
+        if OTP_SHOW_IN_APP:
+            logger.info("Skipping email delivery for OTP because OTP_SHOW_IN_APP is enabled")
+        else:
+            send_otp_email(email, otp)
     except Exception as e:
         logger.exception("OTP email send failed for %s", email)
         _clear_otp(email)
@@ -311,7 +315,10 @@ async def send_otp(req: SendOtpRequest):
             detail=f"Could not deliver OTP email: {type(e).__name__}: {e}",
         )
     otp_last_sent[email] = now
-    return {"ok": True, "email": email}
+    response = {"ok": True, "email": email}
+    if OTP_SHOW_IN_APP and email.endswith("@stu.upes.ac.in"):
+        response["debug_otp"] = otp
+    return response
 
 
 @api_router.post("/auth/login")

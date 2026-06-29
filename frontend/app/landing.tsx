@@ -39,6 +39,7 @@ export default function Landing() {
 
   const normalized = email.trim().toLowerCase();
   const emailValid = useMemo(() => UPES_EMAIL_RE.test(normalized), [normalized]);
+  const isCollegeEmail = normalized.endsWith("@stu.upes.ac.in");
   const pwValid = password.length >= 6 && password.length <= 8;
   const pwMatch = mode === "signup" ? password === confirm && pwValid : pwValid;
   const formValid = emailValid && pwValid && (mode === "login" || pwMatch);
@@ -65,11 +66,16 @@ export default function Landing() {
         router.replace("/(tabs)");
       } else {
         // Signup: trigger OTP and route to OTP screen with password staged
-        await api.sendOtp(normalized);
+        const res = await api.sendOtp(normalized);
         show("OTP sent — check your UPES inbox 📩", "success");
         router.push({
           pathname: "/otp",
-          params: { email: normalized, password, mode: "signup" },
+          params: {
+            email: normalized,
+            password,
+            mode: "signup",
+            debugOtp: isCollegeEmail ? res.debug_otp : undefined,
+          },
         });
       }
     } catch (e: any) {
