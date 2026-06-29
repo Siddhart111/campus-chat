@@ -1,9 +1,13 @@
+import { Platform } from "react-native";
 import Constants from "expo-constants";
 
+const envBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
 const DEFAULT_BACKEND_HOST =
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  (Constants.expoConfig?.extra as { backendUrl?: string })?.backendUrl ||
-  "https://campus-chat-fv70.onrender.com";
+  (envBackendUrl && envBackendUrl.startsWith("http://localhost") && Platform.OS !== "web")
+    ? "https://campus-chat-fv70.onrender.com"
+    : envBackendUrl ||
+      (Constants.expoConfig?.extra as { backendUrl?: string })?.backendUrl ||
+      "https://campus-chat-fv70.onrender.com";
 const BASE = DEFAULT_BACKEND_HOST.replace(/\/+$/, "");
 
 export const API = `${BASE}/api`;
