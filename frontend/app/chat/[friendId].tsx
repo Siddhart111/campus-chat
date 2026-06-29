@@ -296,9 +296,9 @@ export default function PrivateChat() {
 function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: any }) {
   return (
     <View style={[styles.row, isSelf ? styles.rowRight : styles.rowLeft]}>
-      <View style={{ maxWidth: "72%" }}>
+      <View style={[styles.bubbleContainer, isSelf ? styles.bubbleContainerRight : styles.bubbleContainerLeft]}>
         {!isSelf && msg.sender_gender && msg.sender_gender !== "unknown" ? (
-          <View style={{ marginBottom: 4, marginLeft: 2, flexDirection: "row" }}>
+          <View style={styles.senderInfoRow}>
             <GenderBadge gender={msg.sender_gender} size="xs" />
           </View>
         ) : null}
@@ -308,13 +308,13 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
             isSelf
               ? {
                   backgroundColor: colors.bubbleSelf,
-                  borderBottomRightRadius: 4,
+                  borderBottomRightRadius: 6,
                 }
               : {
                   backgroundColor: colors.bubbleOther,
                   borderColor: colors.border,
                   borderWidth: 1,
-                  borderBottomLeftRadius: 4,
+                  borderBottomLeftRadius: 6,
                 },
           ]}
         >
@@ -323,7 +323,7 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
             <Image source={{ uri: msg.image }} style={styles.msgImage} />
           ) : null}
           {msg.text ? (
-            <Text style={{ color: isSelf ? "#fff" : colors.textPrimary, fontSize: 14, lineHeight: 18 }}>
+            <Text style={styles.messageText(isSelf ? colors.bubbleTextSelf : colors.textPrimary)}>
               {msg.text}
             </Text>
           ) : null}
@@ -410,26 +410,46 @@ const styles = StyleSheet.create({
   peerAlias: { fontSize: 15, fontWeight: "700" },
   peerStatus: { fontSize: 11, marginTop: 1 },
   list: { padding: 14, gap: 6 },
-  row: { flexDirection: "row", marginBottom: 4, gap: 6 },
+  row: { flexDirection: "row", marginBottom: 8, gap: 10 },
   rowLeft: { justifyContent: "flex-start", alignSelf: "flex-start" },
   rowRight: { justifyContent: "flex-end", alignSelf: "flex-end" },
-  bubble: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 16,
+  bubbleContainer: {
+    maxWidth: "78%",
+    gap: 4,
   },
-  msgImage: { width: 180, height: 140, borderRadius: 10, marginBottom: 6 },
+  bubbleContainerLeft: {
+    alignItems: "flex-start",
+  },
+  bubbleContainerRight: {
+    alignItems: "flex-end",
+  },
+  senderInfoRow: {
+    marginBottom: 2,
+    marginLeft: 4,
+    flexDirection: "row",
+  },
+  bubble: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 18,
+  },
+  msgImage: { width: 180, height: 140, borderRadius: 14, marginBottom: 8 },
+  messageText: (color: string) => ({
+    color,
+    fontSize: 14,
+    lineHeight: 20,
+  }),
   time: {
     fontSize: 10,
-    marginTop: 4,
+    marginTop: 2,
   },
   timeLeft: {
     alignSelf: "flex-start",
-    marginLeft: 6,
+    marginLeft: 8,
   },
   timeRight: {
     alignSelf: "flex-end",
-    marginRight: 6,
+    marginRight: 8,
   },
   composer: {
     flexDirection: "row",
