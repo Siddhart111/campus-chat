@@ -41,6 +41,7 @@
     },
     "extra": {
       "router": {},
+      "backendUrl": "https://campus-chat-fv70.onrender.com",
       "eas": {
         "projectId": "1fa5c553-8773-44f3-b75d-5061d89383e0"
       }
