@@ -297,11 +297,6 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
   return (
     <View style={[styles.row, isSelf ? styles.rowRight : styles.rowLeft]}>
       <View style={[styles.bubbleContainer, isSelf ? styles.bubbleContainerRight : styles.bubbleContainerLeft]}>
-        {!isSelf && msg.sender_gender && msg.sender_gender !== "unknown" ? (
-          <View style={styles.senderInfoRow}>
-            <GenderBadge gender={msg.sender_gender} size="xs" />
-          </View>
-        ) : null}
         <View
           style={[
             styles.bubble,
@@ -318,6 +313,11 @@ function Bubble({ msg, isSelf, colors }: { msg: Msg; isSelf: boolean; colors: an
                 },
           ]}
         >
+          {!isSelf && msg.sender_gender && msg.sender_gender !== "unknown" ? (
+            <View style={styles.senderInfoRow}>
+              <GenderBadge gender={msg.sender_gender} size="xs" />
+            </View>
+          ) : null}
           {msg.reply_to ? <ReplyQuoteBlock reply={msg.reply_to} colors={colors} /> : null}
           {msg.image ? (
             <Image source={{ uri: msg.image }} style={styles.msgImage} />
@@ -409,13 +409,14 @@ const styles = StyleSheet.create({
   peerRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   peerAlias: { fontSize: 15, fontWeight: "700" },
   peerStatus: { fontSize: 11, marginTop: 1 },
-  list: { padding: 14, gap: 6 },
-  row: { flexDirection: "row", marginBottom: 8, gap: 10 },
-  rowLeft: { justifyContent: "flex-start", alignSelf: "flex-start" },
-  rowRight: { justifyContent: "flex-end", alignSelf: "flex-end" },
+  list: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 20, gap: 8 },
+  row: { flexDirection: "row", marginBottom: 12, gap: 10, width: "100%" },
+  rowLeft: { justifyContent: "flex-start" },
+  rowRight: { justifyContent: "flex-end" },
   bubbleContainer: {
-    maxWidth: "78%",
+    maxWidth: "82%",
     gap: 4,
+    paddingHorizontal: 4,
   },
   bubbleContainerLeft: {
     alignItems: "flex-start",
@@ -429,19 +430,21 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   bubble: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 18,
+    borderRadius: 20,
+    overflow: "hidden",
   },
   msgImage: { width: 180, height: 140, borderRadius: 14, marginBottom: 8 },
   messageText: (color: string) => ({
     color,
     fontSize: 14,
     lineHeight: 20,
+    flexShrink: 1,
   }),
   time: {
     fontSize: 10,
-    marginTop: 2,
+    marginTop: 4,
   },
   timeLeft: {
     alignSelf: "flex-start",
