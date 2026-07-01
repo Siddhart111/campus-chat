@@ -103,7 +103,7 @@ export default function Landing() {
 
           <View style={styles.heroImageContainer}>
             <Image
-              source={require("../assets/images/app-image.png")}
+              source={require("../assets/images/favicon.png")}
               style={styles.heroImage}
               resizeMode="contain"
             />
