@@ -341,15 +341,16 @@ function MessageBubble({
               {msg.text}
             </Text>
           ) : null}
-          <Text
-            style={[
-              styles.time,
-              { color: isSelf ? "rgba(255,255,255,0.7)" : colors.textMuted },
-            ]}
-          >
-            {timeOf(msg.timestamp)}
-          </Text>
         </View>
+        <Text
+          style={[
+            styles.time,
+            isSelf ? styles.timeRight : styles.timeLeft,
+            { color: colors.textMuted },
+          ]}
+        >
+          {timeOf(msg.timestamp)}
+        </Text>
       </View>
     </Animated.View>
   );
@@ -401,7 +402,7 @@ const styles = StyleSheet.create({
   listContent: { padding: 12, gap: 8 },
   row: { flexDirection: "row", alignItems: "flex-end", gap: 8, marginBottom: 6 },
   rowLeft: { justifyContent: "flex-start" },
-  rowRight: { justifyContent: "flex-end", alignSelf: "flex-end" },
+  rowRight: { justifyContent: "flex-end" },
   aliasRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 4, marginLeft: 2 },
   aliasLabel: { fontSize: 11, fontWeight: "700" },
   bubble: {
@@ -412,7 +413,9 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   msgImage: { width: 200, height: 160, borderRadius: 10, marginBottom: 6 },
-  time: { fontSize: 10, marginTop: 4, alignSelf: "flex-end" },
+  time: { fontSize: 10, marginTop: 3 },
+  timeLeft: { alignSelf: "flex-start", marginLeft: 4 },
+  timeRight: { alignSelf: "flex-end", marginRight: 4 },
   composer: {
     flexDirection: "row",
     alignItems: "flex-end",

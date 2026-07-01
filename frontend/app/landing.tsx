@@ -80,7 +80,9 @@ export default function Landing() {
         });
       }
     } catch (e: any) {
-      show(e.message || "Failed", "error");
+      const message = e?.message || "Failed";
+      console.error("Signup/login error:", e);
+      show(message, "error");
     } finally {
       setLoading(false);
     }

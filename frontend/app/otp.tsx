@@ -83,7 +83,9 @@ export default function Otp() {
       show(`Welcome, ${res.user.alias} 🎉`, "success");
       router.replace("/(tabs)");
     } catch (e: any) {
-      show(e.message || "Wrong OTP", "error");
+      const message = e?.message || "Wrong OTP";
+      console.error("OTP verify error:", e);
+      show(message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -100,7 +102,9 @@ export default function Otp() {
         show("New OTP sent — check your inbox 📩", "success");
       }
     } catch (e: any) {
-      show(e.message || "Failed to resend", "error");
+      const message = e?.message || "Failed to resend";
+      console.error("OTP resend error:", e);
+      show(message, "error");
     }
   };
 

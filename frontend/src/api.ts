@@ -8,13 +8,21 @@ export function wsUrl(userId: string) {
 }
 
 async function jsonFetch(path: string, opts: RequestInit = {}) {
-  const res = await fetch(`${API}${path}`, {
-    ...opts,
-    headers: {
-      "Content-Type": "application/json",
-      ...(opts.headers || {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API}${path}`, {
+      ...opts,
+      headers: {
+        "Content-Type": "application/json",
+        ...(opts.headers || {}),
+      },
+    });
+  } catch (e: any) {
+    const message = e?.message || String(e);
+    console.error(`Network error fetching ${API}${path}:`, e);
+    throw new Error(`Network error: ${message}`);
+  }
+
   if (!res.ok) {
     let detail = `HTTP ${res.status}`;
     try {
