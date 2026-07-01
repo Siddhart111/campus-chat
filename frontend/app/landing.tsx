@@ -101,14 +101,6 @@ export default function Landing() {
             <Wordmark size={34} subtitle="Anonymous · Real · Fun" />
           </View>
 
-          <View style={styles.heroImageContainer}>
-            <Image
-              source={require("../assets/images/favicon.png")}
-              style={styles.heroImage}
-              resizeMode="contain"
-            />
-          </View>
-
           {/* College selector pill */}
           <View style={[styles.collegeRow, { backgroundColor: colors.glass, borderColor: colors.border }]}>
             <View
@@ -398,16 +390,6 @@ const styles = StyleSheet.create({
   },
   ctaText: { color: "#fff", fontSize: 14, fontWeight: "700", letterSpacing: 0.5 },
   foot: { textAlign: "center", fontSize: 11, letterSpacing: 0.4, paddingHorizontal: 8 },
-  heroImageContainer: {
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  heroImage: {
-    width: "100%",
-    maxWidth: 320,
-    height: 180,
-    borderRadius: 24,
-  },
   blob: {
     position: "absolute",
     width: 280,

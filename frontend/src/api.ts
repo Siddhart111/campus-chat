@@ -1,14 +1,4 @@
-import Constants from "expo-constants";
-
-const envBackendUrl = process.env.EXPO_PUBLIC_BACKEND_URL;
-const DEFAULT_BACKEND_HOST =
-  (envBackendUrl && envBackendUrl.startsWith("http://localhost"))
-    ? "https://campus-chat-fv70.onrender.com"
-    : envBackendUrl ||
-      (Constants.expoConfig?.extra as { backendUrl?: string })?.backendUrl ||
-      "https://campus-chat-fv70.onrender.com";
-const BASE = DEFAULT_BACKEND_HOST.replace(/\/+$/, "");
-
+const BASE = "https://campus-chat-fv70.onrender.com";
 export const API = `${BASE}/api`;
 
 export function wsUrl(userId: string) {
